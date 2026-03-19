@@ -176,8 +176,8 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
 }
 
 // ── Card ──
-export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('card', className)}>{children}</div>;
+export function Card({ children, className, onClick }: { children: React.ReactNode; className?: string; onClick?: React.MouseEventHandler<HTMLDivElement> }) {
+  return <div className={cn('card', className)} onClick={onClick}>{children}</div>;
 }
 
 // ── Divider ──

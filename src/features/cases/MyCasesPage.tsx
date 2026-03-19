@@ -1,7 +1,7 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCases, useCreateCase } from '@/shared/api/queries';
-import { Button, Badge, Card, InputField, SelectField } from '@/shared/components/ui';
+import { Button, Card, InputField, SelectField } from '@/shared/components/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 import type { Case, CaseOrder } from '@/types';
 
@@ -98,7 +98,7 @@ const CaseCard = memo(function CaseCard({
   onToggle: () => void;
   onNavigate: (path: string) => void;
 }) {
-  const config = STATUS_CONFIG[caseData.status] ?? STATUS_CONFIG.pending_order;
+  const config = STATUS_CONFIG[caseData.status] ?? { label: 'PENDING ORDER', color: 'text-amber-600', badgeColor: 'pending' as const };
   const canCancel = caseData.status !== 'cancelled' && caseData.status !== 'order_placed';
 
   return (
