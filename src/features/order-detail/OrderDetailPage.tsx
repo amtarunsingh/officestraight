@@ -1,8 +1,7 @@
-import { useState, memo, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useOrderDetail } from '@/shared/api/queries';
-import { Button, Badge, Card, Divider } from '@/shared/components/ui';
-import { formatCurrency, cn } from '@/shared/lib/utils';
+import { Button, Badge, Card } from '@/shared/components/ui';
+import { cn } from '@/shared/lib/utils';
 
 const TABS = ['Summary', 'Quote', 'Client', 'Documents', 'Entry basis', 'Progress follow-up'] as const;
 
@@ -272,7 +271,7 @@ const TAB_COMPONENTS = [SummaryTab, QuoteTab, ClientTab, DocumentsTab, EntryBasi
 
 // ── Main Page ──
 export default function OrderDetailPage() {
-  const { orderId } = useParams<{ orderId: string }>();
+  useParams<{ orderId: string }>();
   const [activeTab, setActiveTab] = useState(0);
 
   // TODO: const { data, isLoading } = useOrderDetail(orderId!);
