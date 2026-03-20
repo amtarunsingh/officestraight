@@ -1,12 +1,7 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-<<<<<<< HEAD
-import { useCases, useCreateCase } from '@/shared/api/queries';
-import { Button, Card, InputField, SelectField } from '@/shared/components/ui';
-=======
 import { useCases, useCreateCase, useCancelCase } from '@/shared/api/queries';
-import { Button, Badge, Card, InputField, SelectField } from '@/shared/components/ui';
->>>>>>> 1be0058 (claude/fixes)
+import { Button, Card, InputField, SelectField } from '@/shared/components/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 import type { Case, CaseOrder } from '@/types';
 

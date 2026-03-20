@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getMockJurisdictions } from '@/shared/api/mockData';
 import type {
   JurisdictionSelection,
   WordCountData,
@@ -52,20 +53,20 @@ const defaultInstructions: OperationalInstructions = {
 
 const initialState = {
   caseId: null,
-  customerReference: '',
-  personInCharge: '',
-  poNumber: '',
-  jurisdictions: [],
+  customerReference: 'AG-2021-FRT',
+  personInCharge: 'Irena Pasic',
+  poNumber: 'PO-98754',
+  jurisdictions: getMockJurisdictions(),
   wordCount: {
-    numberOfClaims: 0,
-    wordsInClaims: 0,
-    independentClaims: 0,
-    wordsInDescription: 0,
-    totalPages: 0,
-    pagesOfClaims: 0,
-    totalWords: 0,
-    pagesOfDescription: 0,
-    pagesOfDrawings: 0,
+    numberOfClaims: 14,
+    wordsInClaims: 1032,
+    independentClaims: 3,
+    wordsInDescription: 9881,
+    totalPages: 47,
+    pagesOfClaims: 4,
+    totalWords: 10913,
+    pagesOfDescription: 28,
+    pagesOfDrawings: 15,
     pagesOfSequenceListing: 0,
   } as WordCountData,
   wordCountMode: 'estimate' as const,

@@ -1,19 +1,27 @@
 import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Patent } from '@/types';
 import { formatDate, daysRemaining, isDeadlinePassed } from '@/shared/lib/utils';
 import { cn } from '@/shared/lib/utils';
 
 interface PatentSidebarProps {
   patent: Patent | null;
+  /** Hide the back button (e.g. on the first step). Defaults to showing it. */
+  hideBack?: boolean;
 }
 
 /** Memoised — only re-renders when patent data actually changes */
-export const PatentSidebar = memo(function PatentSidebar({ patent }: PatentSidebarProps) {
+export const PatentSidebar = memo(function PatentSidebar({ patent, hideBack }: PatentSidebarProps) {
+  const navigate = useNavigate();
+
   if (!patent) {
     return (
-      <div className="w-[260px] min-w-[260px] bg-amber-50/50 rounded-lg border border-amber-200 p-4 text-xs h-fit sticky top-4">
-        <div className="text-gold font-bold text-sm mb-3">Patent Summary</div>
-        <p className="text-gray-400 italic">Loading patent data...</p>
+      <div className="w-[260px] min-w-[260px] sticky top-4">
+        {!hideBack && <BackButton onClick={() => navigate(-1)} />}
+        <div className="bg-amber-50/50 rounded-lg border border-amber-200 p-4 text-xs">
+          <div className="text-gold font-bold text-sm mb-3">Patent Summary</div>
+          <p className="text-gray-400 italic">Loading patent data...</p>
+        </div>
       </div>
     );
   }
@@ -23,8 +31,10 @@ export const PatentSidebar = memo(function PatentSidebar({ patent }: PatentSideb
   const passed31 = isDeadlinePassed(patent.deadline31Month);
 
   return (
-    <aside className="w-[260px] min-w-[260px] bg-amber-50/50 rounded-lg border border-amber-200 p-4 text-xs h-fit sticky top-4">
-      <div className="text-gold font-bold text-sm mb-3">Patent Summary</div>
+    <div className="w-[260px] min-w-[260px] sticky top-4">
+      {!hideBack && <BackButton onClick={() => navigate(-1)} />}
+      <aside className="bg-amber-50/50 rounded-lg border border-amber-200 p-4 text-xs">
+        <div className="text-gold font-bold text-sm mb-3">Patent Summary</div>
 
       {/* General info */}
       {([
@@ -75,5 +85,18 @@ export const PatentSidebar = memo(function PatentSidebar({ patent }: PatentSideb
         </div>
       </div>
     </aside>
+    </div>
   );
 });
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-1.5 text-sm text-navy font-semibold mb-3 ml-auto hover:text-gold transition-colors"
+    >
+      <span className="text-base">←</span> Back
+    </button>
+  );
+}

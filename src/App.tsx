@@ -30,7 +30,7 @@ export function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route element={<AppLayout />}>
+        <Route path="/" element={<AppLayout />}>
           <Route index element={<PageSuspense><MyCases /></PageSuspense>} />
           {/* Quote Phase */}
           <Route path="case/:caseId/service-selection" element={<PageSuspense><ServiceSelection /></PageSuspense>} />

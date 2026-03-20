@@ -7,6 +7,7 @@ import { Button, Card, InputField, Badge, Steps, Divider, FooterActions } from '
 import { cn } from '@/shared/lib/utils';
 
 const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
+const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
 
 const WORD_COUNT_FIELDS = [
   { key: 'numberOfClaims', label: 'No. of claims' },
@@ -38,9 +39,9 @@ export default function WordCountPage() {
   }, [caseId, mode, navigate]);
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={2} />
+        <Steps steps={QUOTE_STEPS} current={2} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
 
         <Card>
           <h3 className="text-base font-bold text-navy mb-1">Word Count</h3>

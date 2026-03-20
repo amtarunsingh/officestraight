@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { LAST_CASE_ID_KEY } from '@/shared/lib/sessionKeys';
 import { cn } from '@/shared/lib/utils';
 
 interface Phase {
@@ -30,15 +31,24 @@ function getActivePhase(pathname: string): string {
   return 'cases';
 }
 
+/** Match `/case/:id/...` or `/case/:id` so phase tabs stay usable across URL shapes. */
 function extractCaseId(pathname: string): string | null {
-  const match = pathname.match(/\/case\/([^/]+)\//);
-  return match ? match[1] : null;
+  const match = pathname.match(/^\/case\/([^/]+)(?:\/|$)/);
+  return match?.[1] ?? null;
+}
+
+function readStoredCaseId(): string | null {
+  try {
+    return sessionStorage.getItem(LAST_CASE_ID_KEY);
+  } catch {
+    return null;
+  }
 }
 
 export function PhaseTabBar({ pathname }: { pathname: string }) {
   const navigate = useNavigate();
   const activePhase = getActivePhase(pathname);
-  const caseId = extractCaseId(pathname);
+  const caseId = extractCaseId(pathname) ?? readStoredCaseId();
 
   const handleClick = (phase: Phase) => {
     if (phase.id === 'cases') {
