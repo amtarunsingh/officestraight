@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Steps, RadioGroup, Divider, FooterActions } from '@/shared/components/ui';
 import type { InstructionAnswer, OperationalInstructions } from '@/types';
@@ -16,6 +17,7 @@ export default function InstructionsPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
   const instructions = store.instructions;
 
   const updateField = (field: keyof OperationalInstructions, value: string) => {
@@ -93,7 +95,7 @@ export default function InstructionsPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

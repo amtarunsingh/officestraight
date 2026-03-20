@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Steps, InputField, SelectField, Badge, Divider, FooterActions } from '@/shared/components/ui';
 
@@ -14,6 +15,7 @@ export default function InventorsPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
 
   // TODO: Replace with data from API — inventors pre-filled from WIPO
   const inventors = store.inventors.length > 0
@@ -72,7 +74,7 @@ export default function InventorsPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

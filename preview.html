@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Valipat PCT - Preview</title>
+  <style>
+    /* Tailwind-inspired reset + design tokens */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #1B2A4A;
+      --gold: #C8922A;
+      --surface: #F5F6F8;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--surface); color: var(--navy); }
+    a { color: inherit; text-decoration: none; }
+
+    /* Header */
+    .header { background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: 56px; }
+    .header .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+    .header .logo-icon { display: flex; gap: 3px; }
+    .header .logo-icon span { width: 12px; height: 12px; background: var(--gold); display: block; transform: rotate(45deg); }
+    .header .user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    .header .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }
+
+    /* Tab bar */
+    .tabbar { background: #fff; border-bottom: 1px solid #d1d5db; padding: 0 24px; display: flex; gap: 0; overflow-x: auto; }
+    .tabbar button { padding: 12px 20px; font-size: 14px; background: transparent; border: none; cursor: pointer; border-bottom: 2.5px solid transparent; color: #9ca3af; white-space: nowrap; }
+    .tabbar button.active { font-weight: 700; color: var(--navy); background: rgba(99,102,241,0.05); border-bottom-color: var(--navy); }
+    .tabbar button:hover:not(.active) { color: #6b7280; }
+    .tabbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Main layout */
+    .main { max-width: 1200px; margin: 0 auto; padding: 20px 24px; }
+    .flex-row { display: flex; gap: 20px; }
+    .flex-1 { flex: 1; }
+
+    /* Card */
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 12px; }
+
+    /* Steps */
+    .steps { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .step-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .step-num.active { background: var(--navy); color: #fff; }
+    .step-num.done { background: var(--gold); color: #fff; }
+    .step-num.pending { background: #e5e7eb; color: #9ca3af; }
+    .step-label { font-size: 14px; white-space: nowrap; }
+    .step-label.active { font-weight: 700; color: var(--navy); }
+    .step-label:not(.active) { color: #9ca3af; }
+    .step-line { width: 32px; height: 2px; flex-shrink: 0; }
+    .step-line.done { background: var(--gold); }
+    .step-line:not(.done) { background: #e5e7eb; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 6px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all 0.15s; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-md { padding: 8px 16px; font-size: 14px; }
+    .btn-lg { padding: 10px 24px; font-size: 14px; }
+    .btn-primary { background: var(--navy); color: #fff; }
+    .btn-gold { background: var(--gold); color: #fff; }
+    .btn-outline { background: transparent; color: var(--navy); border-color: var(--navy); }
+    .btn-ghost { background: transparent; color: #6b7280; border-color: #d1d5db; }
+    .btn-danger { background: transparent; color: #dc2626; border-color: #dc2626; }
+    .btn-link { background: transparent; color: var(--navy); text-decoration: underline; border: none; padding: 0; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Badge */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .badge-warning { background: #fef3c7; color: #92400e; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-danger { background: #fee2e2; color: #991b1b; }
+    .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-pending { background: #fff7ed; color: #9a3412; }
+    .badge-gold { background: var(--gold); color: #fff; }
+
+    /* Form inputs */
+    .input-group { margin-bottom: 12px; }
+    .input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+    .input-group input, .input-group select, .input-group textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: var(--navy); background: #fff;
+      outline: none;
+    }
+    .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+      box-shadow: 0 0 0 2px rgba(27,42,74,0.2); border-color: var(--navy);
+    }
+
+    /* Divider */
+    .divider { border-top: 1px solid #d1d5db; margin: 16px 0; }
+
+    /* Sidebar */
+    .sidebar { width: 260px; min-width: 260px; background: rgba(255,251,235,0.5); border-radius: 8px; border: 1px solid #fde68a; padding: 16px; font-size: 12px; height: fit-content; position: sticky; top: 16px; }
+    .sidebar .title { color: var(--gold); font-weight: 700; font-size: 14px; margin-bottom: 12px; }
+    .sidebar .field { margin-bottom: 6px; }
+    .sidebar .field-label { color: #9ca3af; font-size: 11px; }
+    .sidebar .field-value { color: var(--navy); font-weight: 500; }
+    .sidebar .deadline-box { margin-top: 12px; padding: 8px; border-radius: 6px; font-size: 11px; }
+    .sidebar .deadline-box.warn { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+    .sidebar .deadline-box.ok { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { padding: 10px; font-weight: 700; font-size: 11px; color: var(--navy); border-bottom: 2px solid var(--navy); text-align: left; background: #f8fafc; }
+    th.right { text-align: right; }
+    td { padding: 10px; border-bottom: 1px solid #d1d5db; }
+    td.right { text-align: right; }
+    td.bold { font-weight: 700; }
+    td.gold { color: var(--gold); font-weight: 700; }
+    tr.total-row { background: #f8fafc; }
+    tr.total-row td { font-weight: 700; }
+
+    /* Radio/Checkbox */
+    .radio-group { margin-bottom: 10px; }
+    .radio-group .label { font-size: 12px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .radio-group .options { display: flex; gap: 16px; flex-wrap: wrap; }
+    .radio-group .options label { font-size: 14px; color: var(--navy); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+    /* Page selector */
+    .page-nav { display: flex; gap: 8px; margin-bottom: 16px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e5e7eb; overflow-x: auto; }
+    .page-nav button { padding: 6px 14px; font-size: 12px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; background: transparent; color: #6b7280; white-space: nowrap; font-weight: 500; }
+    .page-nav button.active { background: var(--navy); color: #fff; font-weight: 700; }
+    .page-nav button:hover:not(.active) { background: #e5e7eb; }
+
+    /* Misc */
+    .text-gold { color: var(--gold); }
+    .text-sm { font-size: 14px; }
+    .text-xs { font-size: 12px; }
+    .text-gray { color: #6b7280; }
+    .text-red { color: #dc2626; }
+    .text-amber { color: #d97706; }
+    .text-green { color: #16a34a; }
+    .text-blue { color: #2563eb; }
+    .text-bold { font-weight: 700; }
+    .mb-1 { margin-bottom: 4px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-3 { margin-bottom: 12px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+    .italic { font-style: italic; }
+    .flex-end { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .flex-gap { display: flex; gap: 12px; }
+    .filter-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+    .banner { padding: 14px 20px; background: #fff7ed; border: 2px solid #fbbf24; border-radius: 8px; margin-bottom: 20px; }
+    .banner .title { font-weight: 700; color: #d97706; font-size: 15px; }
+    .banner .desc { font-size: 14px; color: #92400e; font-style: italic; }
+
+    /* New case widget */
+    .new-case { width: 280px; min-width: 280px; }
+    .new-case .card { background: rgba(255,251,235,0.5); border-color: #fde68a; text-align: center; }
+
+    /* Case card */
+    .case-card { padding: 16px; }
+    .case-status { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .case-title { font-weight: 700; font-size: 15px; color: var(--navy); margin-bottom: 4px; }
+    .case-meta { font-size: 14px; color: #6b7280; }
+
+    /* Fast track box */
+    .fast-track { padding: 14px; background: #f9fafb; border-radius: 8px; border: 1px solid #d1d5db; margin-bottom: 16px; }
+
+    /* Mode selection */
+    .mode-cards { display: flex; gap: 12px; margin-bottom: 20px; }
+    .mode-card { flex: 1; padding: 16px; border-radius: 8px; cursor: pointer; border: 2px solid #d1d5db; background: #fff; transition: all 0.15s; }
+    .mode-card.active-estimate { border-color: var(--navy); background: rgba(238,242,255,0.5); }
+    .mode-card.active-guaranteed { border-color: var(--gold); background: rgba(255,251,235,0.5); }
+    .mode-card .mode-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .mode-card .mode-desc { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+
+    /* Warning box */
+    .warning-box { padding: 10px; background: #fffbeb; border-radius: 6px; border: 1px solid #fcd34d; margin-bottom: 12px; font-size: 12px; color: #92400e; }
+
+    /* Confirmation box */
+    .confirm-box { padding: 20px; background: #fffbeb; border-radius: 8px; border: 1px solid #fcd34d; text-align: center; margin-bottom: 16px; }
+    .confirm-box .icon { font-size: 40px; margin-bottom: 8px; }
+    .confirm-box .title { font-weight: 700; font-size: 16px; color: var(--navy); margin-bottom: 4px; }
+    .confirm-box .desc { font-size: 14px; color: #6b7280; }
+
+    /* Hidden */
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><span></span><span></span></div>
+      Valipat
+    </div>
+    <div class="user">
+      <div>
+        <div style="font-weight:600; font-size:13px">Irena P.</div>
+        <div style="font-size:11px; opacity:0.7">Valipat SRL</div>
+      </div>
+      <div class="avatar">IP</div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tabbar" id="tabbar">
+    <button class="active" onclick="showPage('cases')">My Cases</button>
+    <button disabled id="tab-quote" onclick="showPage('service-selection')">Quote Phase</button>
+    <button disabled id="tab-order" onclick="showPage('instructions')">Order Phase</button>
+    <button disabled id="tab-confirm" onclick="showPage('confirmation')">Confirmation</button>
+  </div>
+
+  <!-- Page switcher (for demo) -->
+  <div class="main">
+    <div class="page-nav" id="page-nav">
+      <button class="active" onclick="showPage('cases')">My Cases</button>
+      <button onclick="showPage('service-selection')">1. Service Selection</button>
+      <button onclick="showPage('word-count')">2. Word Count</button>
+      <button onclick="showPage('quote-details')">3. Quote Details</button>
+      <button onclick="showPage('instructions')">4. Instructions</button>
+      <button onclick="showPage('inventors')">5. Inventors</button>
+      <button onclick="showPage('annuities')">6. Annuities</button>
+      <button onclick="showPage('billing')">7. Billing</button>
+      <button onclick="showPage('confirmation')">8. Confirmation</button>
+    </div>
+
+    <!-- ========= MY CASES ========= -->
+    <div id="page-cases">
+      <div class="banner">
+        <div class="title">Thank you for your order!</div>
+        <div class="desc">An acknowledgment of receipt has been sent to you. Valipat will get back to you shortly.</div>
+      </div>
+
+      <div class="flex-row">
+        <div class="flex-1">
+          <h2 style="font-size:20px; font-weight:700; color:var(--navy); margin-bottom:12px">My Cases</h2>
+
+          <!-- Filters -->
+          <div class="filter-row">
+            <label style="font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px">
+              <input type="radio" name="filter" checked style="accent-color:var(--navy)"> All cases
+            </label>
+            <label style="font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px">
+              <input type="radio" name="filter" style="accent-color:var(--navy)"> Quotes only
+            </label>
+            <label style="font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px">
+              <input type="radio" name="filter" style="accent-color:var(--navy)"> Orders only
+            </label>
+          </div>
+
+          <!-- Search -->
+          <div class="flex-gap mb-3" style="align-items:flex-start">
+            <div class="input-group" style="width:200px; margin-bottom:0">
+              <select><option>Application No.</option><option>Publication No.</option><option>Client Reference</option></select>
+            </div>
+            <div class="input-group" style="width:300px; margin-bottom:0">
+              <input type="text" placeholder="Type here" />
+            </div>
+            <button class="btn btn-md btn-primary">Search Past Cases</button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:14px">
+            <span>Displaying <strong>1 - 3</strong> of <strong>3</strong> in total</span>
+            <span class="text-xs text-gray">All statuses selected</span>
+          </div>
+
+          <!-- Case 1 -->
+          <div class="card case-card">
+            <div class="case-status text-amber">QUOTE INCOMPLETE</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start">
+              <div>
+                <div class="case-title">Method for Enhanced Signal Processing</div>
+                <div class="case-meta"><strong>PCT/EP2025/052966</strong> <span style="color:#9ca3af; margin-left:8px">REF-001</span></div>
+                <div class="case-meta mt-2">Date: <span class="text-gold">18 Mar 2026</span> Total: <strong>&euro;3,657.56</strong></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px">
+                <button class="btn btn-sm btn-outline" onclick="showPage('service-selection')">View</button>
+                <button class="btn btn-sm btn-ghost">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 2 -->
+          <div class="card case-card">
+            <div class="case-status text-green">ORDER PLACED <span class="text-gray" style="font-weight:400"> / 2 ORDERS</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start">
+              <div>
+                <div class="case-title">Biodegradable Polymer Composition</div>
+                <div class="case-meta"><strong>PCT/US2024/038451</strong></div>
+                <div class="case-meta mt-2">Date: <span class="text-gold">02 Feb 2026</span> Total: <strong>&euro;12,450.00</strong></div>
+              </div>
+              <button class="btn btn-sm btn-outline">View</button>
+            </div>
+          </div>
+
+          <!-- Case 3 -->
+          <div class="card case-card">
+            <div class="case-status text-red">CANCELLED ORDER</div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start">
+              <div>
+                <div class="case-title">Quantum Computing Error Correction</div>
+                <div class="case-meta"><strong>PCT/JP2024/019876</strong></div>
+                <div class="case-meta mt-2">Date: <span class="text-gold">15 Jan 2026</span> Total: <strong>&euro;0.00</strong></div>
+              </div>
+              <button class="btn btn-sm btn-outline">View</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Start new case -->
+        <div class="new-case">
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:8px">Start New Case</h3>
+            <p class="text-xs text-gray italic mb-3">Search for a PCT application / publication number</p>
+            <div class="input-group">
+              <input type="text" placeholder="PCT/EP2025/052966 or WO/..." />
+            </div>
+            <button class="btn btn-lg btn-primary" style="width:100%">Search</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= SERVICE SELECTION ========= -->
+    <div id="page-service-selection" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num active">1</div><span class="step-label active">Service Selection</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">2</div><span class="step-label">Word Count</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">3</div><span class="step-label">Quote Details</span>
+          </div>
+
+          <div class="warning-box"><strong>⚠ Note:</strong> 30/31 month deadline has passed for some jurisdictions. Please check affected jurisdictions below.</div>
+
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">National Phase Entry</h3>
+            <div class="flex-gap mb-3">
+              <div class="input-group" style="flex:1"><label>Customer reference</label><input type="text" placeholder="Your ref" /></div>
+              <div class="input-group" style="flex:1"><label>Person in charge</label><input type="text" placeholder="Name" /></div>
+              <div class="input-group" style="flex:1"><label>PO Number / Invoice ref.</label><input type="text" placeholder="PO-12345" /></div>
+            </div>
+            <div class="divider"></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+              <div style="display:flex; gap:8px">
+                <button class="btn btn-sm btn-primary">Region View</button>
+                <button class="btn btn-sm btn-ghost">Alphabetical View</button>
+              </div>
+              <button class="btn btn-sm btn-ghost">Show Full Names</button>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>☑</th><th>Jurisdictions (3)</th><th>Desc</th><th>Claims</th><th>Agent</th><th>Basis</th>
+                  <th class="right">Official</th><th class="right">Service</th><th class="right">Translation</th><th class="right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox" checked style="accent-color:var(--navy)"></td>
+                  <td style="font-weight:600; color:#d97706">BB ⚠</td>
+                  <td class="text-gray">-</td><td class="text-gray">sq</td>
+                  <td><span class="text-gold text-xs" style="text-decoration:underline; cursor:pointer">Hanschell & Company</span></td>
+                  <td><select style="padding:2px 6px; border:1px solid #d1d5db; border-radius:4px; font-size:11px"><option>As filed</option><option>Art 19 amended</option><option>Voluntary</option></select></td>
+                  <td class="right">&euro;321.70</td><td class="right">&euro;940.00</td><td class="right">—</td><td class="right gold">&euro;1,261.70</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" checked style="accent-color:var(--navy)"></td>
+                  <td style="font-weight:600">EG</td>
+                  <td class="text-gray">el</td><td class="text-gray">sq</td>
+                  <td><span class="text-gold text-xs" style="text-decoration:underline; cursor:pointer">Saba Intellectual Property</span></td>
+                  <td><select style="padding:2px 6px; border:1px solid #d1d5db; border-radius:4px; font-size:11px"><option>As filed</option></select></td>
+                  <td class="right">&euro;3.30</td><td class="right">&euro;1,390.00</td><td class="right">—</td><td class="right gold">&euro;1,393.30</td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox" checked style="accent-color:var(--navy)"></td>
+                  <td style="font-weight:600">LY</td>
+                  <td class="text-gray">-</td><td class="text-gray">sq</td>
+                  <td><span class="text-gold text-xs" style="text-decoration:underline; cursor:pointer">Saba Intellectual Property</span></td>
+                  <td><select style="padding:2px 6px; border:1px solid #d1d5db; border-radius:4px; font-size:11px"><option>As filed</option></select></td>
+                  <td class="right">&euro;12.56</td><td class="right">&euro;990.00</td><td class="right">—</td><td class="right gold">&euro;1,002.56</td>
+                </tr>
+                <tr class="total-row">
+                  <td colspan="6"><strong>Grand Total</strong></td>
+                  <td class="right">&euro;337.56</td><td class="right">&euro;3,320.00</td><td class="right">&euro;0.00</td>
+                  <td class="right" style="color:var(--gold); font-size:14px">&euro;3,657.56</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="display:flex; justify-content:flex-end; margin-top:8px">
+              <button class="btn btn-sm btn-outline">Update total</button>
+            </div>
+          </div>
+
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button>
+            <span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('word-count')">Save and continue</button>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="title">Patent Summary</div>
+          <div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div>
+          <div class="field"><div class="field-label">Application No.</div><div class="field-value">PCT/EP2025/052966</div></div>
+          <div class="field"><div class="field-label">Publication No.</div><div class="field-value">WO/2025/123456</div></div>
+          <div class="field"><div class="field-label">Language</div><div class="field-value">English</div></div>
+          <div class="field"><div class="field-label">Receiving Office</div><div class="field-value">EPO</div></div>
+          <hr style="border-color:#d1d5db; margin:16px 0">
+          <div class="field"><div class="field-label">Filing Date</div><div class="field-value">15 Feb 2023</div></div>
+          <div class="field"><div class="field-label">Priority Date</div><div class="field-value">16 Feb 2022</div></div>
+          <div class="field"><div class="field-label" style="color:#d97706">30-month deadline</div><div style="font-weight:600; color:#d97706">16 Aug 2024 <span style="font-size:10px; font-weight:400">(passed)</span></div></div>
+          <div class="field"><div class="field-label" style="color:#d97706">31-month deadline</div><div style="font-weight:600; color:#d97706">16 Sep 2024 <span style="font-size:10px; font-weight:400">(passed)</span></div></div>
+          <div class="deadline-box warn">
+            <div style="font-weight:700">⚠ Deadline Passed</div>
+            <div>The 30-month deadline has passed. Late surcharges may apply.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= WORD COUNT ========= -->
+    <div id="page-word-count" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num done">1</div><span class="step-label">Service Selection</span>
+            <div class="step-line done"></div>
+            <div class="step-num active">2</div><span class="step-label active">Word Count</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">3</div><span class="step-label">Quote Details</span>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px">Word Count</h3>
+
+            <div class="fast-track">
+              <div style="font-weight:700; font-size:14px; color:var(--navy); margin-bottom:4px">Fast track order</div>
+              <p class="text-xs text-gray mb-2">Valipat offers the automated generation of an online quote based on a word count of your patent.</p>
+              <p class="text-xs text-gray mb-3">If you do not know the number of words contained in your patent and/or if you do not need an online quote, you can <strong>order directly without a preliminary online quote.</strong></p>
+              <button class="btn btn-md btn-gold" onclick="showPage('instructions')">Skip the quote and order now</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="mode-cards">
+              <div class="mode-card active-estimate" id="mode-estimate" onclick="setMode('estimate')">
+                <div class="mode-title" style="color:var(--navy)">📊 I know the word count</div>
+                <div class="mode-desc">Provide your numbers for an instant online quote.</div>
+                <span class="badge badge-info">Instant quote</span>
+              </div>
+              <div class="mode-card" id="mode-guaranteed" onclick="setMode('guaranteed')">
+                <div class="mode-title text-gold">✓ Guaranteed quote</div>
+                <div class="mode-desc">Valipat performs the word count. Ready within 2 business days.</div>
+                <span class="badge badge-gold">Fixed price</span>
+              </div>
+            </div>
+
+            <!-- Estimate form -->
+            <div id="estimate-form">
+              <p class="text-xs text-gray mb-3">Enter your word count. Fields cannot be blank to proceed.</p>
+              <div class="grid-2">
+                <div class="input-group"><label>No. of claims</label><input type="number" value="14" /></div>
+                <div class="input-group"><label>No. of words in claims</label><input type="number" value="1032" /></div>
+                <div class="input-group"><label>No. of independent claims</label><input type="number" value="3" /></div>
+                <div class="input-group"><label>No. of words in description</label><input type="number" value="9881" /></div>
+                <div class="input-group"><label>Total number of pages</label><input type="number" value="47" /></div>
+                <div class="input-group"><label>No. of pages of claims</label><input type="number" value="4" /></div>
+                <div class="input-group"><label>Total number of words</label><input type="number" value="10913" /></div>
+                <div class="input-group"><label>No. of pages of description</label><input type="number" value="28" /></div>
+                <div class="input-group"><label>No. of pages of drawings</label><input type="number" value="15" /></div>
+                <div class="input-group"><label>No. of pages of sequence listing</label><input type="number" value="0" /></div>
+              </div>
+            </div>
+
+            <!-- Guaranteed form (hidden by default) -->
+            <div id="guaranteed-form" class="hidden">
+              <div class="confirm-box">
+                <div class="icon">⏳</div>
+                <div class="title">Valipat Word Count Requested</div>
+                <div class="desc">Case saved. Quote available within <strong>24-48 hours</strong>. You'll be notified by email.</div>
+              </div>
+              <div style="padding:16px; background:#f9fafb; border-radius:8px; border:1px solid #d1d5db">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:6px">For any specific request, please fill in the field below</label>
+                <textarea placeholder="e.g. Please prioritise the word count for Egypt and Libya as the deadline is approaching..." style="width:100%; padding:10px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; min-height:80px; resize:vertical; outline:none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button>
+            <span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('quote-details')">Save and continue</button>
+          </div>
+        </div>
+
+        <div class="sidebar">
+          <div class="title">Patent Summary</div>
+          <div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div>
+          <div class="field"><div class="field-label">Application No.</div><div class="field-value">PCT/EP2025/052966</div></div>
+          <div class="deadline-box warn">
+            <div style="font-weight:700">⚠ Deadline Passed</div>
+            <div>The 30-month deadline has passed. Late surcharges may apply.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= QUOTE DETAILS ========= -->
+    <div id="page-quote-details" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num done">1</div><span class="step-label">Service Selection</span>
+            <div class="step-line done"></div>
+            <div class="step-num done">2</div><span class="step-label">Word Count</span>
+            <div class="step-line done"></div>
+            <div class="step-num active">3</div><span class="step-label active">Quote Details</span>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">Word count and references</h3>
+            <p class="text-xs text-gold italic mb-3">The following shows the word count calculated according to the selected word count methodology and used to calculate your online quote.</p>
+
+            <div style="display:flex; gap:40px; margin-bottom:16px">
+              <div class="text-xs" style="display:flex; flex-direction:column; gap:2px">
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Words in description</span><strong>9881</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Pages of description</span><strong>28</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Number of claims</span><strong>14</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Words in claims</span><strong>1032</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Pages of claims</span><strong>4</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Pages of drawings</span><strong>15</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Total number of words</span><strong>10913</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Total number of pages</span><strong>47</strong></div>
+              </div>
+              <div class="text-xs" style="display:flex; flex-direction:column; gap:2px">
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Your reference</span><strong class="text-red">Not specified</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Person in charge</span><strong class="text-red">Not specified</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">PO Number</span><strong class="text-red">Not specified</strong></div>
+                <div style="display:flex; justify-content:space-between; gap:20px"><span class="text-gray">Valipat's reference</span><strong>VAL00297345</strong></div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:8px">Jurisdictions where you want the patent to be effective</h4>
+
+            <table style="margin-bottom:12px">
+              <thead>
+                <tr><th>Countries (3)</th><th>Description</th><th>Claims</th><th>Agent</th><th class="right">Official</th><th class="right">Service</th><th class="right">Translation</th><th class="right">Total</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Barbados</td><td class="text-gray">-</td><td class="text-gray">sq</td><td class="text-gray text-xs">Hanschell & Company</td><td class="right">&euro;321.70</td><td class="right">&euro;940.00</td><td class="right">—</td><td class="right gold">&euro;1,261.70</td></tr>
+                <tr><td>Egypt</td><td class="text-gray">el</td><td class="text-gray">sq</td><td class="text-gray text-xs">Saba Intellectual Property</td><td class="right">&euro;3.30</td><td class="right">&euro;1,390.00</td><td class="right">—</td><td class="right gold">&euro;1,393.30</td></tr>
+                <tr><td>Libya</td><td class="text-gray">-</td><td class="text-gray">sq</td><td class="text-gray text-xs">Saba Intellectual Property</td><td class="right">&euro;12.56</td><td class="right">&euro;990.00</td><td class="right">—</td><td class="right gold">&euro;1,002.56</td></tr>
+                <tr class="total-row"><td colspan="4"><strong>Grand Total</strong></td><td class="right">&euro;337.56</td><td class="right">&euro;3,320.00</td><td class="right">&euro;0.00</td><td class="right" style="color:var(--gold); font-size:14px">&euro;3,657.56</td></tr>
+              </tbody>
+            </table>
+
+            <p class="text-xs text-gray mb-2">If based on the word count performed by Valipat, our quote is valid for 28 days.</p>
+            <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px">
+              <span class="text-xs text-blue" style="cursor:pointer">📄 Export to PDF</span>
+              <span class="text-xs text-blue" style="cursor:pointer">📊 Export to Excel</span>
+            </div>
+          </div>
+
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">Back to cases</button>
+            <span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('instructions')">Proceed to order</button>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="title">Patent Summary</div>
+          <div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div>
+          <div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= INSTRUCTIONS ========= -->
+    <div id="page-instructions" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num active">1</div><span class="step-label active">Instructions</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">2</div><span class="step-label">Inventors</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">3</div><span class="step-label">Annuities & Special Requests</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">4</div><span class="step-label">Billing / Email Info</span>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px">Operational Instructions</h3>
+            <p class="text-xs text-gray mb-4">Answer the following. Select "Provide later" if unsure.</p>
+
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:8px">Applicants / Inventors</h4>
+            <div class="radio-group"><div class="label">Are the applicants in the national phase the same as in the international phase?</div><div class="options"><label><input type="radio" name="q1" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q1" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q1" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+            <div class="radio-group"><div class="label">Have any changes been made?</div><div class="options"><label><input type="radio" name="q2" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q2" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q2" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+            <div class="radio-group"><div class="label">Is a worldwide assignment available?</div><div class="options"><label><input type="radio" name="q3" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q3" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q3" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+            <div class="radio-group"><div class="label">Were the inventors salaried workers at the time of filing?</div><div class="options"><label><input type="radio" name="q4" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q4" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q4" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+
+            <div class="divider"></div>
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:8px">Priority Claims</h4>
+            <div class="radio-group"><div class="label">Was the priority document submitted to the International Bureau?</div><div class="options"><label><input type="radio" name="q5" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q5" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q5" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:8px; margin-top:12px">Type of Protection</h4>
+            <div class="radio-group"><div class="label">Do you wish to file a utility model instead of/in parallel to a patent?</div><div class="options"><label><input type="radio" name="q6" style="accent-color:var(--navy)"> Yes</label><label><input type="radio" name="q6" style="accent-color:var(--navy)"> No</label><label><input type="radio" name="q6" checked style="accent-color:var(--navy)"> Provide later</label></div></div>
+          </div>
+
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button>
+            <span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('inventors')">Save and continue</button>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="title">Patent Summary</div>
+          <div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div>
+          <div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= INVENTORS ========= -->
+    <div id="page-inventors" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num done">1</div><span class="step-label">Instructions</span>
+            <div class="step-line done"></div>
+            <div class="step-num active">2</div><span class="step-label active">Inventors</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">3</div><span class="step-label">Annuities & Special Requests</span>
+            <div class="step-line"></div>
+            <div class="step-num pending">4</div><span class="step-label">Billing / Email Info</span>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px">Applicants / Inventors</h3>
+            <p class="text-xs text-gray mb-4">Data pre-filled from WIPO. Edit any field if corrections needed.</p>
+
+            <div style="padding:16px; background:#f9fafb; border-radius:8px; border:1px solid #d1d5db; margin-bottom:12px">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <span style="font-weight:700; font-size:14px; color:var(--navy)">Inventor 1</span>
+                <span class="badge badge-success">Pre-filled from WIPO</span>
+              </div>
+              <div class="flex-gap">
+                <div class="input-group" style="flex:1"><label>Full Name</label><input type="text" value="JONES, Neil" /></div>
+                <div class="input-group" style="flex:1"><label>Citizenship / Nationality</label><select><option>United Arab Emirates</option><option>United States</option><option>France</option></select></div>
+              </div>
+            </div>
+
+            <div style="padding:16px; background:#fff; border-radius:8px; border:1px solid #d1d5db; margin-bottom:12px">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <span style="font-weight:700; font-size:14px; color:var(--navy)">Inventor 2</span>
+                <span class="badge badge-success">Pre-filled from WIPO</span>
+              </div>
+              <div class="flex-gap">
+                <div class="input-group" style="flex:1"><label>Full Name</label><input type="text" value="OUIDA, Julien" /></div>
+                <div class="input-group" style="flex:1"><label>Citizenship / Nationality</label><select><option>United Arab Emirates</option></select></div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+            <div class="input-group"><label>Additional information</label><input type="text" placeholder="Any additional info about the inventors..." /></div>
+          </div>
+
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button>
+            <span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('annuities')">Save and continue</button>
+          </div>
+        </div>
+        <div class="sidebar">
+          <div class="title">Patent Summary</div>
+          <div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div>
+          <div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========= ANNUITIES ========= -->
+    <div id="page-annuities" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num done">1</div><span class="step-label">Instructions</span><div class="step-line done"></div>
+            <div class="step-num done">2</div><span class="step-label">Inventors</span><div class="step-line done"></div>
+            <div class="step-num active">3</div><span class="step-label active">Annuities & Special Requests</span><div class="step-line"></div>
+            <div class="step-num pending">4</div><span class="step-label">Billing / Email Info</span>
+          </div>
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">Renewal Fees</h3>
+            <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer; margin-bottom:12px"><input type="checkbox" checked style="accent-color:var(--navy)"> Pay the first renewal fees</label>
+            <p class="text-xs text-gold italic mb-3">Valipat will send your order to your preferred Renewal Fee Provider at the publication of the mention of grant or shortly after your order should the grant decision already have been published.</p>
+            <div style="display:flex; gap:16px; align-items:center; margin-bottom:16px">
+              <span class="text-xs text-bold">Choose Offices</span>
+              <label style="display:flex; align-items:center; gap:4px; font-size:14px; cursor:pointer"><input type="checkbox" checked style="accent-color:var(--navy)"> EG</label>
+              <label style="display:flex; align-items:center; gap:4px; font-size:14px; cursor:pointer"><input type="checkbox" checked style="accent-color:var(--navy)"> LY</label>
+              <label style="display:flex; align-items:center; gap:4px; font-size:14px; cursor:pointer"><input type="checkbox" checked style="accent-color:var(--navy)"> BB</label>
+              <span class="text-xs text-blue" style="cursor:pointer">All</span>
+              <span class="text-gray">|</span>
+              <span class="text-xs text-blue" style="cursor:pointer">None</span>
+            </div>
+            <div class="divider"></div>
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">Invoicing Preferences</h3>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:14px; cursor:pointer; margin-bottom:6px"><input type="checkbox" style="accent-color:var(--navy); margin-top:3px"> Separate invoices for each jurisdiction</label>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:14px; cursor:pointer; margin-bottom:12px"><input type="checkbox" style="accent-color:var(--navy); margin-top:3px"> Invoice sent together with the formal acknowledgment of receipt</label>
+            <div class="divider"></div>
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">Operational Requests</h3>
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:6px">Source document</h4>
+            <p class="text-xs text-gray italic mb-2">Specify below which text should be used for the translation.</p>
+            <div class="radio-group"><div class="options" style="flex-direction:column; gap:8px">
+              <label><input type="radio" name="source" checked style="accent-color:var(--navy)"> Refer to the B1 or the text intended for grant</label>
+              <label><input type="radio" name="source" style="accent-color:var(--navy)"> I will send to support@valipat.com a file</label>
+              <label><input type="radio" name="source" style="accent-color:var(--navy)"> I upload now a file</label>
+            </div></div>
+            <div class="input-group mt-2"><label>Special requests for translator(s)</label><input type="text" placeholder="Specify any additional request for translator(s)." /></div>
+            <div class="divider"></div>
+            <div class="input-group"><label>Additional information</label><input type="text" placeholder="Specify any additional request or comment you may have for the Valipat team." /></div>
+          </div>
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button><span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('billing')">Save and continue</button>
+          </div>
+        </div>
+        <div class="sidebar"><div class="title">Patent Summary</div><div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div><div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div></div>
+      </div>
+    </div>
+
+    <!-- ========= BILLING ========= -->
+    <div id="page-billing" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="steps">
+            <div class="step-num done">1</div><span class="step-label">Instructions</span><div class="step-line done"></div>
+            <div class="step-num done">2</div><span class="step-label">Inventors</span><div class="step-line done"></div>
+            <div class="step-num done">3</div><span class="step-label">Annuities & Special Requests</span><div class="step-line done"></div>
+            <div class="step-num active">4</div><span class="step-label active">Billing / Email Info</span>
+          </div>
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px">Billing Information</h3>
+            <p class="text-xs text-gold italic mb-3">Modify the billing/emailing address if different than the one specified in your profile.</p>
+            <div class="input-group"><select><option>Valipat SRL</option></select></div>
+            <div class="mb-3">
+              <div style="font-weight:700; font-size:15px">Valipat SRL</div>
+              <div class="text-sm text-gray">Uitbreidingstraat 72 - 5<br>Antwerp, 2600, BE<br>VAT number: BE0806735439</div>
+            </div>
+            <button class="btn btn-sm btn-outline">Change Billing Address</button>
+            <div class="divider"></div>
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:4px">Email Details</h3>
+            <p class="text-xs text-gold italic mb-3">Modify the billing/emailing address if different than the one specified in your profile.</p>
+            <div class="text-sm mb-1">To: <span class="text-blue">irena.pasic@valipat.com</span></div>
+            <div class="text-sm mb-3">Cc: —</div>
+            <button class="btn btn-sm btn-outline">Change Emailing Address</button>
+          </div>
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button><span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" onclick="showPage('confirmation')">Save and continue</button>
+          </div>
+        </div>
+        <div class="sidebar"><div class="title">Patent Summary</div><div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div><div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div></div>
+      </div>
+    </div>
+
+    <!-- ========= CONFIRMATION ========= -->
+    <div id="page-confirmation" class="hidden">
+      <div class="flex-row">
+        <div class="flex-1">
+          <div class="card">
+            <h3 style="font-size:16px; font-weight:700; color:var(--navy); margin-bottom:12px">Order Confirmation</h3>
+            <p class="text-xs text-gold italic mb-4">By clicking below you confirm:</p>
+            <ul style="list-style:disc; margin-left:20px; font-size:14px; line-height:2; margin-bottom:16px">
+              <li>That you confirm the Order total of <strong>&euro;3,657.56</strong></li>
+              <li>Terms and Conditions available <span class="text-blue" style="text-decoration:underline; cursor:pointer">here</span>, (the "Agreement") shall govern your Order.</li>
+            </ul>
+            <p class="text-xs text-gray" style="line-height:1.6; margin-bottom:16px">By clicking on "I approve all of the above" below you (a) acknowledge that you have read and understand the Agreement; (b) represent and warrant that you have the right, power, and authority to enter into this Agreement.</p>
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:14px; cursor:pointer; margin-bottom:6px"><input type="checkbox" style="accent-color:var(--navy); margin-top:3px" id="approve-check" onchange="document.getElementById('place-btn').disabled = !this.checked"> I approve all of the above</label>
+            <div class="divider"></div>
+            <h4 style="font-size:14px; font-weight:700; color:var(--navy); margin-bottom:8px">Next Steps</h4>
+            <p class="text-xs text-gray">Once the order has been placed, Valipat will send an automated acknowledgement of receipt followed within 2 business days by a more detailed communication.</p>
+          </div>
+          <div class="flex-end">
+            <button class="btn-link btn" onclick="showPage('cases')">cancel</button><span class="text-gray">or</span>
+            <button class="btn btn-lg btn-gold" id="place-btn" disabled onclick="showPage('cases')">Place order now</button>
+          </div>
+        </div>
+        <div class="sidebar"><div class="title">Patent Summary</div><div class="field"><div class="field-label">Title</div><div class="field-value">Method for Enhanced Signal Processing</div></div><div class="deadline-box warn"><div style="font-weight:700">⚠ Deadline Passed</div><div>Late surcharges may apply.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const pages = ['cases','service-selection','word-count','quote-details','instructions','inventors','annuities','billing','confirmation'];
+    const tabMap = {
+      'cases': 0,
+      'service-selection': 1, 'word-count': 1, 'quote-details': 1,
+      'instructions': 2, 'inventors': 2, 'annuities': 2, 'billing': 2,
+      'confirmation': 3,
+    };
+
+    function showPage(name) {
+      pages.forEach(p => {
+        document.getElementById('page-' + p).classList.toggle('hidden', p !== name);
+      });
+      // Update tab bar
+      const tabs = document.querySelectorAll('.tabbar button');
+      tabs.forEach((t, i) => {
+        t.classList.toggle('active', i === tabMap[name]);
+        if (i > 0) t.disabled = (name === 'cases');
+      });
+      // Update page nav
+      const navBtns = document.querySelectorAll('.page-nav button');
+      const pageIndex = pages.indexOf(name);
+      navBtns.forEach((b, i) => b.classList.toggle('active', i === pageIndex));
+      window.scrollTo(0, 0);
+    }
+
+    function setMode(mode) {
+      document.getElementById('mode-estimate').className = 'mode-card' + (mode === 'estimate' ? ' active-estimate' : '');
+      document.getElementById('mode-guaranteed').className = 'mode-card' + (mode === 'guaranteed' ? ' active-guaranteed' : '');
+      document.getElementById('estimate-form').classList.toggle('hidden', mode !== 'estimate');
+      document.getElementById('guaranteed-form').classList.toggle('hidden', mode !== 'guaranteed');
+    }
+  </script>
+</body>
+</html>

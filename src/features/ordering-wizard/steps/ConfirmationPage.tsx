@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { usePlaceOrder } from '@/shared/api/queries';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Button, Checkbox, Divider } from '@/shared/components/ui';
-import { formatCurrency } from '@/shared/lib/utils';
+import { formatCurrency, isDeadlinePassed } from '@/shared/lib/utils';
 
 export default function ConfirmationPage() {
   const { caseId } = useParams<{ caseId: string }>();
@@ -12,19 +14,19 @@ export default function ConfirmationPage() {
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
   const [deadlineAcknowledged, setDeadlineAcknowledged] = useState(false);
   const placeOrder = usePlaceOrder(caseId!);
+  const store = useWizardStore();
+  const { patent } = useCasePatent();
 
-  // TODO: Derive from actual jurisdiction deadline data
-  const deadlinePassed = true;
-  const orderTotal = 3661.05;
+  // Derive deadlinePassed from actual patent data
+  const deadlinePassed = patent
+    ? isDeadlinePassed(patent.deadline30Month) || isDeadlinePassed(patent.deadline31Month)
+    : false;
 
-  const handlePlaceOrder = useCallback(() => {
-    if (!approved) return;
-    if (deadlinePassed) {
-      setShowDeadlinePopup(true);
-    } else {
-      confirmOrder();
-    }
-  }, [approved, deadlinePassed]);
+  // Calculate order total from selected jurisdictions
+  const selectedJurisdictions = store.jurisdictions.filter((j) => j.selected);
+  const orderTotal = selectedJurisdictions.length > 0
+    ? selectedJurisdictions.reduce((sum, j) => sum + j.totalFee, 0)
+    : 3661.05; // Fallback when no jurisdictions loaded yet
 
   const confirmOrder = useCallback(async () => {
     setShowDeadlinePopup(false);
@@ -35,6 +37,15 @@ export default function ConfirmationPage() {
       // Error handled by TanStack Query
     }
   }, [placeOrder, navigate]);
+
+  const handlePlaceOrder = useCallback(() => {
+    if (!approved) return;
+    if (deadlinePassed) {
+      setShowDeadlinePopup(true);
+    } else {
+      confirmOrder();
+    }
+  }, [approved, deadlinePassed, confirmOrder]);
 
   return (
     <div className="flex gap-5">
@@ -82,7 +93,7 @@ export default function ConfirmationPage() {
         </div>
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
 
       {/* Deadline Warning Popup */}
       {showDeadlinePopup && (

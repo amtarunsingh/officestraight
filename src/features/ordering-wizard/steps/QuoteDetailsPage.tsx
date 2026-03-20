@@ -1,4 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, Steps, Divider } from '@/shared/components/ui';
 import { formatCurrency } from '@/shared/lib/utils';
@@ -33,12 +35,53 @@ const PLACEHOLDER_JURISDICTIONS = [
 export default function QuoteDetailsPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
+  const store = useWizardStore();
+  const { patent } = useCasePatent();
+
+  // Use store data when available, fall back to placeholders
+  const storeWordCount = store.wordCount;
+  const hasStoreWordCount = Object.values(storeWordCount).some((v) => v > 0);
+  const wordCountRows = hasStoreWordCount
+    ? [
+        ['Words in description', String(storeWordCount.wordsInDescription)],
+        ['Pages of description', String(storeWordCount.pagesOfDescription)],
+        ['Number of claims', String(storeWordCount.numberOfClaims)],
+        ['Words in claims', String(storeWordCount.wordsInClaims)],
+        ['Pages of claims', String(storeWordCount.pagesOfClaims)],
+        ['Pages of drawings', String(storeWordCount.pagesOfDrawings)],
+        ['Total number of words', String(storeWordCount.totalWords)],
+        ['Total number of pages', String(storeWordCount.totalPages)],
+      ]
+    : PLACEHOLDER_WORD_COUNT;
+
+  const storeRefs = [
+    ['Your reference', store.customerReference || 'Not specified', !store.customerReference],
+    ['Person in charge', store.personInCharge || 'Not specified', !store.personInCharge],
+    ['PO Number', store.poNumber || 'Not specified', !store.poNumber],
+    ["Valipat's reference", 'VAL00297345', false],
+  ];
+
+  // Use selected jurisdictions from store when available
+  const selectedJurisdictions = store.jurisdictions.filter((j) => j.selected);
+  const hasStoreJurisdictions = selectedJurisdictions.length > 0;
+  const jurisdictionRows = hasStoreJurisdictions
+    ? selectedJurisdictions.map((j) => ({
+        country: j.name,
+        desc: j.description,
+        claims: j.claims,
+        agent: j.agent.name,
+        off: j.officialFee,
+        svc: j.serviceFee,
+        trl: j.translationFee,
+        total: j.totalFee,
+      }))
+    : PLACEHOLDER_JURISDICTIONS;
 
   const grandTotal = {
-    official: PLACEHOLDER_JURISDICTIONS.reduce((s, j) => s + j.off, 0),
-    service: PLACEHOLDER_JURISDICTIONS.reduce((s, j) => s + j.svc, 0),
-    translation: PLACEHOLDER_JURISDICTIONS.reduce((s, j) => s + j.trl, 0),
-    total: PLACEHOLDER_JURISDICTIONS.reduce((s, j) => s + j.total, 0),
+    official: jurisdictionRows.reduce((s, j) => s + j.off, 0),
+    service: jurisdictionRows.reduce((s, j) => s + j.svc, 0),
+    translation: jurisdictionRows.reduce((s, j) => s + j.trl, 0),
+    total: jurisdictionRows.reduce((s, j) => s + j.total, 0),
   };
 
   return (
@@ -55,7 +98,7 @@ export default function QuoteDetailsPage() {
           <div className="flex gap-10 mb-4">
             {/* Word count */}
             <div className="text-xs space-y-0.5">
-              {PLACEHOLDER_WORD_COUNT.map(([k, v]) => (
+              {wordCountRows.map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-5">
                   <span className="text-gray-500">{k}</span>
                   <strong>{v}</strong>
@@ -64,7 +107,7 @@ export default function QuoteDetailsPage() {
             </div>
             {/* References */}
             <div className="text-xs space-y-0.5">
-              {PLACEHOLDER_REFS.map(([k, v, isWarning]) => (
+              {storeRefs.map(([k, v, isWarning]) => (
                 <div key={k as string} className="flex justify-between gap-5">
                   <span className="text-gray-500">{k as string}</span>
                   <strong className={isWarning ? 'text-red-600' : ''}>{v as string}</strong>
@@ -82,7 +125,7 @@ export default function QuoteDetailsPage() {
           <table className="w-full border-collapse text-xs mb-3">
             <thead>
               <tr className="bg-slate-50">
-                {['Countries (3)', 'Description', 'Claims', 'Agent', 'Official', 'Service', 'Translation', 'Total'].map((h, i) => (
+                {[`Countries (${jurisdictionRows.length})`, 'Description', 'Claims', 'Agent', 'Official', 'Service', 'Translation', 'Total'].map((h, i) => (
                   <th key={h} className={`p-2 text-navy font-bold text-[11px] border-b-2 border-navy ${i >= 4 ? 'text-right' : 'text-left'}`}>
                     {h}
                   </th>
@@ -90,7 +133,7 @@ export default function QuoteDetailsPage() {
               </tr>
             </thead>
             <tbody>
-              {PLACEHOLDER_JURISDICTIONS.map((r) => (
+              {jurisdictionRows.map((r) => (
                 <tr key={r.country} className="border-b border-gray-300">
                   <td className="p-2">{r.country}</td>
                   <td className="p-2 text-gray-500">{r.desc}</td>
@@ -134,7 +177,7 @@ export default function QuoteDetailsPage() {
         </div>
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, InputField, Badge, Steps, Divider, FooterActions } from '@/shared/components/ui';
 import { cn } from '@/shared/lib/utils';
@@ -24,6 +25,7 @@ export default function WordCountPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
   const mode = store.wordCountMode;
 
   const handleSave = useCallback(() => {
@@ -96,7 +98,18 @@ export default function WordCountPage() {
               <p className="text-xs text-gray-500 mb-3">Enter your word count. Fields cannot be blank to proceed.</p>
               <div className="grid grid-cols-2 gap-3">
                 {WORD_COUNT_FIELDS.map(({ key, label }) => (
-                  <InputField key={key} label={label} type="number" defaultValue="0" />
+                  <InputField
+                    key={key}
+                    label={label}
+                    type="number"
+                    value={store.wordCount[key as keyof typeof store.wordCount] ?? 0}
+                    onChange={(e) =>
+                      store.updateWordCount(
+                        key as keyof typeof store.wordCount,
+                        parseInt(e.target.value, 10) || 0,
+                      )
+                    }
+                  />
                 ))}
               </div>
             </div>
@@ -134,7 +147,7 @@ export default function WordCountPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

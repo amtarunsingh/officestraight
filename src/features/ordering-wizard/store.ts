@@ -15,7 +15,7 @@ interface WizardState {
   personInCharge: string;
   poNumber: string;
   jurisdictions: JurisdictionSelection[];
-  wordCount: WordCountData | null;
+  wordCount: WordCountData;
   wordCountMode: 'estimate' | 'guaranteed';
   guaranteedQuoteComment: string;
 
@@ -34,6 +34,7 @@ interface WizardState {
   // ── Actions ──
   setCaseId: (id: string) => void;
   setField: <K extends keyof WizardState>(key: K, value: WizardState[K]) => void;
+  updateWordCount: <K extends keyof WordCountData>(field: K, value: number) => void;
   updateJurisdiction: (code: string, updates: Partial<JurisdictionSelection>) => void;
   toggleJurisdiction: (code: string) => void;
   setJurisdictionBasis: (code: string, basis: BasisOption) => void;
@@ -55,7 +56,18 @@ const initialState = {
   personInCharge: '',
   poNumber: '',
   jurisdictions: [],
-  wordCount: null,
+  wordCount: {
+    numberOfClaims: 0,
+    wordsInClaims: 0,
+    independentClaims: 0,
+    wordsInDescription: 0,
+    totalPages: 0,
+    pagesOfClaims: 0,
+    totalWords: 0,
+    pagesOfDescription: 0,
+    pagesOfDrawings: 0,
+    pagesOfSequenceListing: 0,
+  } as WordCountData,
   wordCountMode: 'estimate' as const,
   guaranteedQuoteComment: '',
   instructions: defaultInstructions,
@@ -76,6 +88,11 @@ export const useWizardStore = create<WizardState>()((set) => ({
   setCaseId: (id) => set({ caseId: id }),
 
   setField: (key, value) => set({ [key]: value }),
+
+  updateWordCount: (field, value) =>
+    set((state) => ({
+      wordCount: { ...state.wordCount, [field]: value },
+    })),
 
   updateJurisdiction: (code, updates) =>
     set((state) => ({

@@ -1,7 +1,12 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+<<<<<<< HEAD
 import { useSaveWizardStep } from '@/shared/api/queries';
+=======
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
+import { useSaveWizardStep, useJurisdictions } from '@/shared/api/queries';
+>>>>>>> 1be0058 (claude/fixes)
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, InputField, SelectField, Steps, Divider, FooterActions } from '@/shared/components/ui';
 import { formatCurrency, cn } from '@/shared/lib/utils';
@@ -108,7 +113,12 @@ export default function ServiceSelectionPage() {
   const [showAgentPopup, setShowAgentPopup] = useState(false);
 
   const store = useWizardStore();
+<<<<<<< HEAD
   useSaveWizardStep(caseId!);
+=======
+  const { patent } = useCasePatent();
+  const saveMutation = useSaveWizardStep(caseId!);
+>>>>>>> 1be0058 (claude/fixes)
 
   // TODO: Replace with real data from useJurisdictions(caseId!)
   const jurisdictions = store.jurisdictions;
@@ -242,8 +252,7 @@ export default function ServiceSelectionPage() {
         <FooterActions onCancel={() => navigate('/')} onSave={handleSave} />
       </div>
 
-      {/* TODO: Pass real patent from useCase query */}
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }
