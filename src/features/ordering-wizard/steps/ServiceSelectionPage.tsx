@@ -1,18 +1,15 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
-<<<<<<< HEAD
-import { useSaveWizardStep } from '@/shared/api/queries';
-=======
 import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
-import { useSaveWizardStep, useJurisdictions } from '@/shared/api/queries';
->>>>>>> 1be0058 (claude/fixes)
+import { useSaveWizardStep } from '@/shared/api/queries';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, InputField, SelectField, Steps, Divider, FooterActions } from '@/shared/components/ui';
 import { formatCurrency, cn } from '@/shared/lib/utils';
 import type { BasisOption, JurisdictionSelection } from '@/types';
 
 const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
+const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
 const BASIS_OPTIONS = [
   { label: 'As filed', value: 'as_filed' },
   { label: 'Art 19 amended', value: 'art19_amended' },
@@ -113,12 +110,8 @@ export default function ServiceSelectionPage() {
   const [showAgentPopup, setShowAgentPopup] = useState(false);
 
   const store = useWizardStore();
-<<<<<<< HEAD
-  useSaveWizardStep(caseId!);
-=======
   const { patent } = useCasePatent();
-  const saveMutation = useSaveWizardStep(caseId!);
->>>>>>> 1be0058 (claude/fixes)
+  useSaveWizardStep(caseId!);
 
   // TODO: Replace with real data from useJurisdictions(caseId!)
   const jurisdictions = store.jurisdictions;
@@ -138,9 +131,9 @@ export default function ServiceSelectionPage() {
   }, [caseId, navigate]);
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={1} />
+        <Steps steps={QUOTE_STEPS} current={1} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
 
         {anyDeadlinePassed && (
           <div className="p-2.5 bg-amber-50 rounded-md border border-amber-300 mb-3 text-xs text-amber-800">

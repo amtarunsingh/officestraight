@@ -48,7 +48,7 @@ export default function ConfirmationPage() {
   }, [approved, deadlinePassed, confirmOrder]);
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
         <Card>
           <h3 className="text-base font-bold text-navy mb-3">Order Confirmation</h3>
@@ -80,7 +80,7 @@ export default function ConfirmationPage() {
         </Card>
 
         <div className="flex justify-end items-center gap-2.5 mt-5">
-          <Button variant="link" size="sm" onClick={() => navigate('/')}>cancel</Button>
+          <Button variant="link" size="sm" onClick={() => navigate('/')}>Cancel</Button>
           <span className="text-gray-400">or</span>
           <Button
             variant="gold"

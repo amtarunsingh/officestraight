@@ -6,6 +6,7 @@ import { Button, Card, Steps, Divider } from '@/shared/components/ui';
 import { formatCurrency } from '@/shared/lib/utils';
 
 const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
+const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
 
 // TODO: Replace with data from useQuote(caseId)
 const PLACEHOLDER_WORD_COUNT = [
@@ -17,13 +18,6 @@ const PLACEHOLDER_WORD_COUNT = [
   ['Pages of drawings', '15'],
   ['Total number of words', '10913'],
   ['Total number of pages', '47'],
-];
-
-const PLACEHOLDER_REFS = [
-  ['Your reference', 'Not specified', true],
-  ['Person in charge', 'Not specified', true],
-  ['Project name', 'Not specified', true],
-  ["Valipat's reference", 'VAL00297345', false],
 ];
 
 const PLACEHOLDER_JURISDICTIONS = [
@@ -85,9 +79,9 @@ export default function QuoteDetailsPage() {
   };
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={3} />
+        <Steps steps={QUOTE_STEPS} current={3} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
 
         <Card>
           <h3 className="text-base font-bold text-navy mb-3">Word count and references</h3>
@@ -169,7 +163,7 @@ export default function QuoteDetailsPage() {
         </Card>
 
         <div className="flex justify-end items-center gap-2.5 mt-2">
-          <Button variant="link" size="sm" onClick={() => navigate('/')}>Back to cases</Button>
+          <Button variant="link" size="sm" onClick={() => navigate('/')}>Cancel</Button>
           <span className="text-gray-400">or</span>
           <Button variant="gold" size="lg" onClick={() => navigate(`/case/${caseId}/instructions`)}>
             Proceed to order
