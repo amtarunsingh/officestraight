@@ -1,24 +1,10 @@
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
 import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, Steps, Divider } from '@/shared/components/ui';
 import { formatCurrency } from '@/shared/lib/utils';
-
-const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
-const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
-
-// TODO: Replace with data from useQuote(caseId)
-const PLACEHOLDER_WORD_COUNT = [
-  ['Words in description', '9881'],
-  ['Pages of description', '28'],
-  ['Number of claims', '14'],
-  ['Words in claims', '1032'],
-  ['Pages of claims', '4'],
-  ['Pages of drawings', '15'],
-  ['Total number of words', '10913'],
-  ['Total number of pages', '47'],
-];
 
 const PLACEHOLDER_JURISDICTIONS = [
   { country: 'Barbados', desc: '-', claims: 'sq', agent: 'Hanschell & Company', off: 321.70, svc: 940.00, trl: 0, total: 1261.70 },
@@ -32,10 +18,21 @@ export default function QuoteDetailsPage() {
   const store = useWizardStore();
   const { patent } = useCasePatent();
 
-  // Use store data when available, fall back to placeholders
+  // Determine steps based on whether word count was pre-filled (guaranteed)
+  const wordCountReady = store.wordCountReady;
+  const quoteSteps = wordCountReady
+    ? ['Service Selection', 'Quote Details']
+    : ['Service Selection', 'Word Count', 'Quote Details'];
+  const quoteRoutes = wordCountReady
+    ? ['service-selection', 'quote-details']
+    : ['service-selection', 'word-count', 'quote-details'];
+  const currentStep = wordCountReady ? 2 : 3;
+
+  // Use store data when available
   const storeWordCount = store.wordCount;
   const hasStoreWordCount = Object.values(storeWordCount).some((v) => v > 0);
-  const wordCountRows = hasStoreWordCount
+
+  const wordCountLeft = hasStoreWordCount
     ? [
         ['Words in description', String(storeWordCount.wordsInDescription)],
         ['Pages of description', String(storeWordCount.pagesOfDescription)],
@@ -46,7 +43,16 @@ export default function QuoteDetailsPage() {
         ['Total number of words', String(storeWordCount.totalWords)],
         ['Total number of pages', String(storeWordCount.totalPages)],
       ]
-    : PLACEHOLDER_WORD_COUNT;
+    : [
+        ['Words in description', '9881'],
+        ['Pages of description', '28'],
+        ['Number of claims', '14'],
+        ['Words in claims', '1032'],
+        ['Pages of claims', '4'],
+        ['Pages of drawings', '15'],
+        ['Total number of words', '10913'],
+        ['Total number of pages', '47'],
+      ];
 
   const storeRefs = [
     ['Your reference', store.customerReference || 'Not specified', !store.customerReference],
@@ -78,33 +84,55 @@ export default function QuoteDetailsPage() {
     total: jurisdictionRows.reduce((s, j) => s + j.total, 0),
   };
 
+  // 8-second popup state
+  const [showPopup, setShowPopup] = useState(false);
+  const [countdown, setCountdown] = useState(8);
+
+  useEffect(() => {
+    if (!showPopup) return;
+    if (countdown <= 0) {
+      navigate('/?wordCountPending=true');
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [showPopup, countdown, navigate]);
+
+  const handleSaveAndContinue = useCallback(() => {
+    setShowPopup(true);
+  }, []);
+
   return (
     <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={3} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
+        <Steps steps={quoteSteps} current={currentStep} onStepClick={(n) => navigate(`/case/${caseId}/${quoteRoutes[n - 1]}`)} />
 
         <Card>
-          <h3 className="text-base font-bold text-navy mb-3">Word count and references</h3>
-          <p className="text-xs text-gold italic mb-3">
+          <h3 className="text-lg font-bold text-navy mb-2">Word count and references</h3>
+          <p className="text-sm text-gold italic mb-4">
             The following shows the word count calculated according to the selected word count methodology and used to calculate your online quote.
           </p>
 
-          <div className="flex gap-10 mb-4">
-            {/* Word count */}
-            <div className="text-xs space-y-0.5">
-              {wordCountRows.map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-5">
-                  <span className="text-gray-500">{k}</span>
-                  <strong>{v}</strong>
+          {/* Word count + References side by side — matching screenshot layout */}
+          <div className="flex gap-12 mb-4">
+            {/* Word count column */}
+            <div className="min-w-[280px]">
+              {wordCountLeft.map(([label, value]) => (
+                <div key={label} className="flex justify-between py-1 text-sm">
+                  <span className="text-gray-500">{label}</span>
+                  <span className="font-bold text-navy ml-6">{value}</span>
                 </div>
               ))}
             </div>
-            {/* References */}
-            <div className="text-xs space-y-0.5">
-              {storeRefs.map(([k, v, isWarning]) => (
-                <div key={k as string} className="flex justify-between gap-5">
-                  <span className="text-gray-500">{k as string}</span>
-                  <strong className={isWarning ? 'text-red-600' : ''}>{v as string}</strong>
+
+            {/* References column */}
+            <div className="min-w-[280px]">
+              {storeRefs.map(([label, value, isWarning]) => (
+                <div key={label as string} className="flex justify-between py-1 text-sm">
+                  <span className="text-gray-500">{label as string}</span>
+                  <span className={`font-bold ml-6 ${isWarning ? 'text-red-600' : 'text-navy'}`}>
+                    {value as string}
+                  </span>
                 </div>
               ))}
             </div>
@@ -157,21 +185,41 @@ export default function QuoteDetailsPage() {
           </p>
 
           <div className="flex justify-end gap-3 mt-4">
-            <span className="text-xs text-blue-600 cursor-pointer">📄 Export to PDF</span>
-            <span className="text-xs text-blue-600 cursor-pointer">📊 Export to Excel</span>
+            <span className="text-xs text-blue-600 cursor-pointer">Export to PDF</span>
+            <span className="text-xs text-blue-600 cursor-pointer">Export to Excel</span>
           </div>
         </Card>
 
         <div className="flex justify-end items-center gap-2.5 mt-2">
           <Button variant="link" size="sm" onClick={() => navigate('/')}>Cancel</Button>
           <span className="text-gray-400">or</span>
-          <Button variant="gold" size="lg" onClick={() => navigate(`/case/${caseId}/instructions`)}>
-            Proceed to order
+          <Button variant="gold" size="lg" onClick={handleSaveAndContinue}>
+            Save and continue
           </Button>
         </div>
       </div>
 
       <PatentSidebar patent={patent} />
+
+      {/* 8-second popup overlay */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[460px] p-8 border border-gray-300 text-center">
+            <div className="text-4xl mb-3">&#9889;</div>
+            <h3 className="text-lg font-bold text-navy mb-2">Word count in progress</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Valipat will perform the official word count and prepare your guaranteed quote.
+              We will notify you by email when it is ready.
+            </p>
+            <div className="text-xs text-gray-400 mb-4">
+              Redirecting to My Cases in <strong>{countdown}s</strong>...
+            </div>
+            <Button variant="gold" size="md" onClick={() => navigate('/?wordCountPending=true')}>
+              Go to My Cases now
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

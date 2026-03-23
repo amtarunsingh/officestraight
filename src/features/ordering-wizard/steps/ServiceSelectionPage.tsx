@@ -9,7 +9,9 @@ import { formatCurrency, cn } from '@/shared/lib/utils';
 import type { BasisOption, JurisdictionSelection } from '@/types';
 
 const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
+const QUOTE_STEPS_NO_WC = ['Service Selection', 'Quote Details'];
 const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
+const QUOTE_ROUTES_NO_WC = ['service-selection', 'quote-details'];
 const BASIS_OPTIONS = [
   { label: 'As filed', value: 'as_filed' },
   { label: 'Art 19 amended', value: 'art19_amended' },
@@ -113,6 +115,11 @@ export default function ServiceSelectionPage() {
   const { patent } = useCasePatent();
   useSaveWizardStep(caseId!);
 
+  // Conditional steps based on whether word count is pre-filled
+  const wordCountReady = store.wordCountReady;
+  const steps = wordCountReady ? QUOTE_STEPS_NO_WC : QUOTE_STEPS;
+  const routes = wordCountReady ? QUOTE_ROUTES_NO_WC : QUOTE_ROUTES;
+
   // TODO: Replace with real data from useJurisdictions(caseId!)
   const jurisdictions = store.jurisdictions;
   const anyDeadlinePassed = jurisdictions.some((j) => j.deadlinePassed);
@@ -127,13 +134,17 @@ export default function ServiceSelectionPage() {
 
   const handleSave = useCallback(async () => {
     // TODO: saveMutation.mutateAsync({ step: 'service-selection', payload: { ... } });
-    navigate(`/case/${caseId}/word-count`);
-  }, [caseId, navigate]);
+    if (wordCountReady) {
+      navigate(`/case/${caseId}/quote-details`);
+    } else {
+      navigate(`/case/${caseId}/word-count`);
+    }
+  }, [caseId, navigate, wordCountReady]);
 
   return (
     <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={1} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
+        <Steps steps={steps} current={1} onStepClick={(n) => navigate(`/case/${caseId}/${routes[n - 1]}`)} />
 
         {anyDeadlinePassed && (
           <div className="p-2.5 bg-amber-50 rounded-md border border-amber-300 mb-3 text-xs text-amber-800">
