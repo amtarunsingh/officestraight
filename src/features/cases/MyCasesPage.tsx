@@ -1,6 +1,7 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCases, useCreateCase, useCancelCase } from '@/shared/api/queries';
+import { useWizardStore } from '@/features/ordering-wizard/store';
 import { Button, Card, InputField, SelectField } from '@/shared/components/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 import type { Case, CaseOrder } from '@/types';
@@ -194,6 +195,36 @@ function StartNewCaseWidget() {
   );
 }
 
+// ── Test Flow Buttons (for demo/testing) ──
+function TestFlowButtons() {
+  const navigate = useNavigate();
+  const store = useWizardStore();
+
+  const handleFreshCase = () => {
+    store.reset();
+    store.setField('wordCountReady', false);
+    navigate('/case/test-fresh/service-selection');
+  };
+
+  const handleWordCountReady = () => {
+    store.reset();
+    store.setField('wordCountReady', true);
+    navigate('/case/test-ready/service-selection');
+  };
+
+  return (
+    <div className="flex gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <span className="text-xs font-semibold text-blue-700 mr-2 self-center">Test flows:</span>
+      <Button variant="outline" size="sm" onClick={handleFreshCase}>
+        Fresh case (fill word count)
+      </Button>
+      <Button variant="gold" size="sm" onClick={handleWordCountReady}>
+        Word count filled by backoffice
+      </Button>
+    </div>
+  );
+}
+
 // ── Main Page ──
 export default function MyCasesPage() {
   const [searchParams] = useSearchParams();
@@ -276,6 +307,9 @@ export default function MyCasesPage() {
             />
             <Button variant="primary" size="md" onClick={handleSearch}>Search Past Cases</Button>
           </div>
+
+          {/* Test buttons for word count flow */}
+          <TestFlowButtons />
 
           {/* Results count */}
           <div className="flex justify-between items-center mb-3 text-sm">

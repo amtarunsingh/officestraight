@@ -194,6 +194,21 @@ export default function ServiceSelectionPage() {
             </Button>
           </div>
 
+          {/* Apply basis to all */}
+          <div className="flex items-center gap-2 mb-3 p-2 bg-gray-50 rounded-md border border-gray-200">
+            <span className="text-xs font-semibold text-navy">Apply basis to all:</span>
+            {BASIS_OPTIONS.map((o) => (
+              <Button
+                key={o.value}
+                variant="ghost"
+                size="sm"
+                onClick={() => store.setAllJurisdictionBasis(o.value as BasisOption)}
+              >
+                {o.label}
+              </Button>
+            ))}
+          </div>
+
           {/* Jurisdiction table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-xs">
