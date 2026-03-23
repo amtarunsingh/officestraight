@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
 import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
@@ -37,26 +37,10 @@ export default function WordCountPage() {
     }
   }, [wordCountReady, caseId, navigate]);
 
-  // 8-second redirect state after submitting estimated word count
-  const [showEstimateToast, setShowEstimateToast] = useState(false);
-  const [countdown, setCountdown] = useState(8);
-
-  useEffect(() => {
-    if (!showEstimateToast) return;
-    if (countdown <= 0) {
-      navigate('/');
-      return;
-    }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [showEstimateToast, countdown, navigate]);
-
   const handleSave = useCallback(() => {
-    if (mode === 'estimate') {
-      // Show estimated quote toast + 8s redirect
-      setShowEstimateToast(true);
-    }
-  }, [mode]);
+    // Navigate to quote details to see the quote
+    navigate(`/case/${caseId}/quote-details`);
+  }, [caseId, navigate]);
 
   // If redirecting (wordCountReady), render nothing
   if (wordCountReady) return null;
@@ -66,96 +50,75 @@ export default function WordCountPage() {
       <div className="flex-1">
         <Steps steps={QUOTE_STEPS} current={2} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
 
-        {/* 8-second notification toast after estimate submission */}
-        {showEstimateToast && (
-          <div className="p-4 bg-green-50 border-2 border-green-400 rounded-lg mb-4 text-center">
-            <div className="text-2xl mb-2">&#9989;</div>
-            <div className="font-bold text-base text-navy mb-1">Estimated quote saved!</div>
-            <div className="text-sm text-gray-600 mb-2">
-              We will notify you when we have the verified word count ready.
-            </div>
-            <div className="text-xs text-gray-400">
-              Redirecting to My Cases in <strong>{countdown}s</strong>...
-            </div>
-            <Button variant="link" size="sm" className="mt-2" onClick={() => navigate('/')}>
-              Go now
+        <Card>
+          <h3 className="text-base font-bold text-navy mb-1">Word Count</h3>
+
+          {/* Fast track */}
+          <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-300 mb-4">
+            <div className="font-bold text-sm text-navy mb-1">Fast track order</div>
+            <p className="text-xs text-gray-500 mb-2">
+              Valipat offers the automated generation of an online quote based on a word count of your patent.
+            </p>
+            <p className="text-xs text-gray-500 mb-3">
+              If you do not know the number of words contained in your patent and/or if you do not need an online quote, you can{' '}
+              <strong>order directly without a preliminary online quote.</strong>
+            </p>
+            <Button
+              variant="gold"
+              size="md"
+              onClick={() => navigate(`/case/${caseId}/instructions`)}
+            >
+              Skip the quote and order now
             </Button>
           </div>
-        )}
 
-        {!showEstimateToast && (
-          <>
-            <Card>
-              <h3 className="text-base font-bold text-navy mb-1">Word Count</h3>
+          <Divider />
 
-              {/* Fast track */}
-              <div className="p-3.5 bg-gray-50 rounded-lg border border-gray-300 mb-4">
-                <div className="font-bold text-sm text-navy mb-1">Fast track order</div>
-                <p className="text-xs text-gray-500 mb-2">
-                  Valipat offers the automated generation of an online quote based on a word count of your patent.
-                </p>
-                <p className="text-xs text-gray-500 mb-3">
-                  If you do not know the number of words contained in your patent and/or if you do not need an online quote, you can{' '}
-                  <strong>order directly without a preliminary online quote.</strong>
-                </p>
-                <Button
-                  variant="gold"
-                  size="md"
-                  onClick={() => navigate(`/case/${caseId}/instructions`)}
-                >
-                  Skip the quote and order now
-                </Button>
-              </div>
-
-              <Divider />
-
-              {/* Mode selection — only show "I know the word count" since guaranteed quote
-                  should not be visible until word count is done */}
-              <div className="flex gap-3 mb-5">
-                <div
-                  onClick={() => store.setField('wordCountMode', 'estimate')}
-                  className={cn(
-                    'flex-1 p-4 rounded-lg cursor-pointer border-2 transition-colors',
-                    mode === 'estimate' ? 'border-navy bg-indigo-50/50' : 'border-gray-300 bg-white',
-                  )}
-                >
-                  <div className="font-bold text-sm text-navy mb-1">I know the word count</div>
-                  <div className="text-xs text-gray-500 mb-1.5">Provide your numbers for an instant online quote.</div>
-                  <Badge color="info">Instant quote</Badge>
-                </div>
-              </div>
-
-              {/* Estimate mode: word count form */}
-              {mode === 'estimate' && (
-                <div>
-                  <p className="text-xs text-gray-500 mb-3">Enter your word count. Fields cannot be blank to proceed.</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {WORD_COUNT_FIELDS.map(({ key, label }) => (
-                      <InputField
-                        key={key}
-                        label={label}
-                        type="number"
-                        value={store.wordCount[key as keyof typeof store.wordCount] ?? 0}
-                        onChange={(e) =>
-                          store.updateWordCount(
-                            key as keyof typeof store.wordCount,
-                            parseInt(e.target.value, 10) || 0,
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                </div>
+          {/* Mode selection — only show "I know the word count" since guaranteed quote
+              should not be visible until word count is done */}
+          <div className="flex gap-3 mb-5">
+            <div
+              onClick={() => store.setField('wordCountMode', 'estimate')}
+              className={cn(
+                'flex-1 p-4 rounded-lg cursor-pointer border-2 transition-colors',
+                mode === 'estimate' ? 'border-navy bg-indigo-50/50' : 'border-gray-300 bg-white',
               )}
-            </Card>
+            >
+              <div className="font-bold text-sm text-navy mb-1">I know the word count</div>
+              <div className="text-xs text-gray-500 mb-1.5">Provide your numbers for an instant online quote.</div>
+              <Badge color="info">Instant quote</Badge>
+            </div>
+          </div>
 
-            <FooterActions
-              onCancel={() => navigate('/')}
-              onSave={handleSave}
-              saveLabel="Save and continue"
-            />
-          </>
-        )}
+          {/* Estimate mode: word count form */}
+          {mode === 'estimate' && (
+            <div>
+              <p className="text-xs text-gray-500 mb-3">Enter your word count. Fields cannot be blank to proceed.</p>
+              <div className="grid grid-cols-2 gap-3">
+                {WORD_COUNT_FIELDS.map(({ key, label }) => (
+                  <InputField
+                    key={key}
+                    label={label}
+                    type="number"
+                    value={store.wordCount[key as keyof typeof store.wordCount] ?? 0}
+                    onChange={(e) =>
+                      store.updateWordCount(
+                        key as keyof typeof store.wordCount,
+                        parseInt(e.target.value, 10) || 0,
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <FooterActions
+          onCancel={() => navigate('/')}
+          onSave={handleSave}
+          saveLabel="Save and continue"
+        />
       </div>
 
       <PatentSidebar patent={patent} />

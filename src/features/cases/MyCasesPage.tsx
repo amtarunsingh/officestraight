@@ -234,6 +234,7 @@ export default function MyCasesPage() {
   const [searchField, setSearchField] = useState('Application No.');
   const [searchTerm, setSearchTerm] = useState('');
   const showBanner = searchParams.get('orderPlaced') === 'true';
+  const showWordCountBanner = searchParams.get('wordCountPending') === 'true';
 
   const { data, isLoading } = useCases({ filter, ...(searchTerm ? { search: searchTerm, searchField } : {}) });
   const cases = data?.results ?? [];
@@ -265,6 +266,16 @@ export default function MyCasesPage() {
           <div className="font-bold text-amber-600 text-[15px]">Thank you for your order!</div>
           <div className="text-sm text-amber-800 italic">
             An acknowledgment of receipt has been sent to you. Valipat will get back to you shortly.
+          </div>
+        </div>
+      )}
+
+      {/* Word count pending banner */}
+      {showWordCountBanner && (
+        <div className="px-5 py-3.5 bg-amber-50 border-2 border-amber-400 rounded-lg mb-5">
+          <div className="font-bold text-amber-700 text-[15px]">Word count in progress</div>
+          <div className="text-sm text-amber-800 italic">
+            Valipat is performing the word count for your case. You will receive an email notification when your guaranteed quote is ready.
           </div>
         </div>
       )}
