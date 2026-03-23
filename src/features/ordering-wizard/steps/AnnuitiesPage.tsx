@@ -11,6 +11,35 @@ const SOURCE_OPTIONS = [
   { label: 'I upload now a file', value: 'upload_now' },
 ];
 
+// Country code → name mapping for display
+const COUNTRY_NAMES: Record<string, string> = {
+  EG: 'Egypt',
+  LY: 'Libya',
+  BB: 'Barbados',
+  OA: 'OAPI',
+  MA: 'Morocco',
+  TN: 'Tunisia',
+  DZ: 'Algeria',
+  SA: 'Saudi Arabia',
+  AE: 'United Arab Emirates',
+  IL: 'Israel',
+  IN: 'India',
+  CN: 'China',
+  JP: 'Japan',
+  KR: 'South Korea',
+  BR: 'Brazil',
+  MX: 'Mexico',
+  ZA: 'South Africa',
+  NG: 'Nigeria',
+  KE: 'Kenya',
+  PH: 'Philippines',
+  TH: 'Thailand',
+  VN: 'Vietnam',
+  MY: 'Malaysia',
+  SG: 'Singapore',
+  ID: 'Indonesia',
+};
+
 export default function AnnuitiesPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
@@ -39,7 +68,7 @@ export default function AnnuitiesPage() {
             {offices.map((code) => (
               <Checkbox
                 key={code}
-                label={code}
+                label={`${code} — ${COUNTRY_NAMES[code] ?? code}`}
                 checked={store.renewalOffices.includes(code)}
                 onChange={(checked) => {
                   const current = store.renewalOffices;

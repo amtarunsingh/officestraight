@@ -17,6 +17,7 @@ interface WizardState {
   jurisdictions: JurisdictionSelection[];
   wordCount: WordCountData | null;
   wordCountMode: 'estimate' | 'guaranteed';
+  wordCountReady: boolean; // true when backoffice has filled word count
   guaranteedQuoteComment: string;
 
   // ── Order Phase ──
@@ -37,6 +38,7 @@ interface WizardState {
   updateJurisdiction: (code: string, updates: Partial<JurisdictionSelection>) => void;
   toggleJurisdiction: (code: string) => void;
   setJurisdictionBasis: (code: string, basis: BasisOption) => void;
+  setAllJurisdictionBasis: (basis: BasisOption) => void;
   reset: () => void;
 }
 
@@ -57,6 +59,7 @@ const initialState = {
   jurisdictions: [],
   wordCount: null,
   wordCountMode: 'estimate' as const,
+  wordCountReady: false,
   guaranteedQuoteComment: '',
   instructions: defaultInstructions,
   inventors: [],
@@ -96,6 +99,11 @@ export const useWizardStore = create<WizardState>()((set) => ({
       jurisdictions: state.jurisdictions.map((j) =>
         j.code === code ? { ...j, basis } : j,
       ),
+    })),
+
+  setAllJurisdictionBasis: (basis) =>
+    set((state) => ({
+      jurisdictions: state.jurisdictions.map((j) => ({ ...j, basis })),
     })),
 
   reset: () => set(initialState),
