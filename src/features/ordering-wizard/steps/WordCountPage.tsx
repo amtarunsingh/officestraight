@@ -1,11 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Button, Card, InputField, Badge, Steps, Divider, FooterActions } from '@/shared/components/ui';
 import { cn } from '@/shared/lib/utils';
 
 const QUOTE_STEPS = ['Service Selection', 'Word Count', 'Quote Details'];
+const QUOTE_ROUTES = ['service-selection', 'word-count', 'quote-details'];
 
 const WORD_COUNT_FIELDS = [
   { key: 'numberOfClaims', label: 'No. of claims' },
@@ -24,6 +26,7 @@ export default function WordCountPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
   const mode = store.wordCountMode;
   const wordCountReady = store.wordCountReady;
 
@@ -59,9 +62,9 @@ export default function WordCountPage() {
   if (wordCountReady) return null;
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={QUOTE_STEPS} current={2} />
+        <Steps steps={QUOTE_STEPS} current={2} onStepClick={(n) => navigate(`/case/${caseId}/${QUOTE_ROUTES[n - 1]}`)} />
 
         {/* 8-second notification toast after estimate submission */}
         {showEstimateToast && (
@@ -128,7 +131,18 @@ export default function WordCountPage() {
                   <p className="text-xs text-gray-500 mb-3">Enter your word count. Fields cannot be blank to proceed.</p>
                   <div className="grid grid-cols-2 gap-3">
                     {WORD_COUNT_FIELDS.map(({ key, label }) => (
-                      <InputField key={key} label={label} type="number" defaultValue="0" />
+                      <InputField
+                        key={key}
+                        label={label}
+                        type="number"
+                        value={store.wordCount[key as keyof typeof store.wordCount] ?? 0}
+                        onChange={(e) =>
+                          store.updateWordCount(
+                            key as keyof typeof store.wordCount,
+                            parseInt(e.target.value, 10) || 0,
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 </div>
@@ -144,7 +158,7 @@ export default function WordCountPage() {
         )}
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

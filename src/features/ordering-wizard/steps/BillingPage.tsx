@@ -1,12 +1,15 @@
 import { useNavigate, useParams } from 'react-router-dom';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Steps, Button, SelectField, Divider, FooterActions } from '@/shared/components/ui';
 
 const ORDER_STEPS = ['Instructions', 'Inventors', 'Annuities & Special Requests', 'Billing / Email Info'];
+const ORDER_ROUTES = ['instructions', 'inventors', 'annuities', 'billing'];
 
 export default function BillingPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
+  const { patent } = useCasePatent();
 
   // TODO: Replace with data from API
   const billing = {
@@ -21,9 +24,9 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={ORDER_STEPS} current={4} />
+        <Steps steps={ORDER_STEPS} current={4} onStepClick={(n) => navigate(`/case/${caseId}/${ORDER_ROUTES[n - 1]}`)} />
 
         <Card>
           <h3 className="text-base font-bold text-navy mb-1">Billing Information</h3>
@@ -60,7 +63,7 @@ export default function BillingPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

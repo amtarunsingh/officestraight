@@ -1,10 +1,12 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Steps, RadioGroup, Divider, FooterActions } from '@/shared/components/ui';
 import type { InstructionAnswer, OperationalInstructions } from '@/types';
 
 const ORDER_STEPS = ['Instructions', 'Inventors', 'Annuities & Special Requests', 'Billing / Email Info'];
+const ORDER_ROUTES = ['instructions', 'inventors', 'annuities', 'billing'];
 
 const ANSWER_OPTIONS = [
   { label: 'Yes', value: 'yes' },
@@ -16,6 +18,7 @@ export default function InstructionsPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
   const instructions = store.instructions;
 
   const updateField = (field: keyof OperationalInstructions, value: string) => {
@@ -26,9 +29,9 @@ export default function InstructionsPage() {
   };
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={ORDER_STEPS} current={1} />
+        <Steps steps={ORDER_STEPS} current={1} onStepClick={(n) => navigate(`/case/${caseId}/${ORDER_ROUTES[n - 1]}`)} />
 
         <Card>
           <h3 className="text-base font-bold text-navy mb-1">Operational Instructions</h3>
@@ -93,7 +96,7 @@ export default function InstructionsPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }

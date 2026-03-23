@@ -189,32 +189,42 @@ export function Divider() {
 interface StepsProps {
   steps: string[];
   current: number;
+  /** When provided, completed + active steps become clickable (1-indexed step number). */
+  onStepClick?: (stepNum: number) => void;
 }
 
-export function Steps({ steps, current }: StepsProps) {
+export function Steps({ steps, current, onStepClick }: StepsProps) {
   return (
     <div className="flex items-center gap-2 mb-4 flex-wrap">
       {steps.map((s, i) => {
         const stepNum = i + 1;
         const isActive = stepNum === current;
         const isDone = stepNum < current;
+        const isClickable = onStepClick && (isDone || isActive);
         return (
           <div key={i} className="flex items-center gap-2">
-            <div
+            <button
+              type="button"
+              disabled={!isClickable}
+              onClick={() => isClickable && onStepClick(stepNum)}
               className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0',
+                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-transform',
                 isActive && 'bg-navy text-white',
                 isDone && 'bg-gold text-white',
                 !isActive && !isDone && 'bg-gray-200 text-gray-500',
+                isClickable && 'cursor-pointer hover:scale-110',
+                !isClickable && 'cursor-default',
               )}
             >
-              {stepNum}
-            </div>
+              {isDone ? '✓' : stepNum}
+            </button>
             <span
+              onClick={() => isClickable && onStepClick(stepNum)}
               className={cn(
                 'text-sm whitespace-nowrap',
                 isActive && 'font-bold text-navy',
                 !isActive && 'text-gray-500',
+                isClickable && 'cursor-pointer hover:underline',
               )}
             >
               {s}
@@ -240,7 +250,7 @@ interface FooterActionsProps {
 export function FooterActions({ onCancel, onSave, saveLabel = 'Save and continue', saveVariant = 'gold' }: FooterActionsProps) {
   return (
     <div className="flex justify-end items-center gap-2.5 mt-5">
-      <Button variant="link" size="sm" onClick={onCancel}>cancel</Button>
+      <Button variant="link" size="sm" onClick={onCancel}>Cancel</Button>
       <span className="text-gray-400">or</span>
       <Button variant={saveVariant} size="lg" onClick={onSave}>{saveLabel}</Button>
     </div>

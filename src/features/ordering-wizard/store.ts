@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { getMockJurisdictions } from '@/shared/api/mockData';
 import type {
   JurisdictionSelection,
   WordCountData,
@@ -15,7 +16,7 @@ interface WizardState {
   personInCharge: string;
   poNumber: string;
   jurisdictions: JurisdictionSelection[];
-  wordCount: WordCountData | null;
+  wordCount: WordCountData;
   wordCountMode: 'estimate' | 'guaranteed';
   wordCountReady: boolean; // true when backoffice has filled word count
   guaranteedQuoteComment: string;
@@ -35,6 +36,7 @@ interface WizardState {
   // ── Actions ──
   setCaseId: (id: string) => void;
   setField: <K extends keyof WizardState>(key: K, value: WizardState[K]) => void;
+  updateWordCount: <K extends keyof WordCountData>(field: K, value: number) => void;
   updateJurisdiction: (code: string, updates: Partial<JurisdictionSelection>) => void;
   toggleJurisdiction: (code: string) => void;
   setJurisdictionBasis: (code: string, basis: BasisOption) => void;
@@ -53,11 +55,22 @@ const defaultInstructions: OperationalInstructions = {
 
 const initialState = {
   caseId: null,
-  customerReference: '',
-  personInCharge: '',
-  poNumber: '',
-  jurisdictions: [],
-  wordCount: null,
+  customerReference: 'AG-2021-FRT',
+  personInCharge: 'Irena Pasic',
+  poNumber: 'PO-98754',
+  jurisdictions: getMockJurisdictions(),
+  wordCount: {
+    numberOfClaims: 14,
+    wordsInClaims: 1032,
+    independentClaims: 3,
+    wordsInDescription: 9881,
+    totalPages: 47,
+    pagesOfClaims: 4,
+    totalWords: 10913,
+    pagesOfDescription: 28,
+    pagesOfDrawings: 15,
+    pagesOfSequenceListing: 0,
+  } as WordCountData,
   wordCountMode: 'estimate' as const,
   wordCountReady: false,
   guaranteedQuoteComment: '',
@@ -79,6 +92,11 @@ export const useWizardStore = create<WizardState>()((set) => ({
   setCaseId: (id) => set({ caseId: id }),
 
   setField: (key, value) => set({ [key]: value }),
+
+  updateWordCount: (field, value) =>
+    set((state) => ({
+      wordCount: { ...state.wordCount, [field]: value },
+    })),
 
   updateJurisdiction: (code, updates) =>
     set((state) => ({

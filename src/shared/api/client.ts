@@ -27,8 +27,10 @@ async function request<T>(
 
   if (!res.ok) {
     if (res.status === 401) {
-      // Redirect to auth.valipat login
-      window.location.href = '/api/v1/auth/login/';
+      // In dev, stay in the SPA so wizard routes work without Django session (TanStack Query surfaces the error).
+      if (import.meta.env.PROD) {
+        window.location.href = '/api/v1/auth/login/';
+      }
       throw new ApiError(401, 'Unauthorized');
     }
     const body = await res.text();

@@ -1,15 +1,15 @@
 import { useState, useCallback, memo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useCases, useCreateCase } from '@/shared/api/queries';
+import { useCases, useCreateCase, useCancelCase } from '@/shared/api/queries';
 import { useWizardStore } from '@/features/ordering-wizard/store';
 import { Button, Card, InputField, SelectField } from '@/shared/components/ui';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 import type { Case, CaseOrder } from '@/types';
 
 // ── Status config ──
-const STATUS_CONFIG: Record<string, { label: string; color: string; badgeColor: 'warning' | 'success' | 'danger' | 'pending' }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; badgeColor: 'warning' | 'success' | 'danger' | 'info' | 'pending' }> = {
   quote_incomplete: { label: 'QUOTE INCOMPLETE', color: 'text-amber-600', badgeColor: 'warning' },
-  quote_complete: { label: 'QUOTE COMPLETE', color: 'text-blue-600', badgeColor: 'info' as 'pending' },
+  quote_complete: { label: 'QUOTE COMPLETE', color: 'text-blue-600', badgeColor: 'info' },
   pending_order: { label: 'PENDING ORDER', color: 'text-amber-600', badgeColor: 'pending' },
   order_placed: { label: 'ORDER PLACED', color: 'text-green-600', badgeColor: 'success' },
   cancelled: { label: 'CANCELLED ORDER', color: 'text-red-600', badgeColor: 'danger' },
@@ -67,7 +67,6 @@ const CaseDetail = memo(function CaseDetail({ caseData, onNavigate }: { caseData
         <div>
           <div className="flex justify-between items-center py-2 border-b border-gray-300">
             <span className="font-bold text-sm text-navy">List of orders</span>
-            <Button variant="link" size="sm">Send Message</Button>
           </div>
           {caseData.orders.map((order, i) => (
             <OrderRow
@@ -93,11 +92,13 @@ const CaseCard = memo(function CaseCard({
   isExpanded,
   onToggle,
   onNavigate,
+  onCancel,
 }: {
   caseData: Case;
   isExpanded: boolean;
   onToggle: () => void;
   onNavigate: (path: string) => void;
+  onCancel: (caseId: string) => void;
 }) {
   const config = STATUS_CONFIG[caseData.status] ?? { label: 'PENDING ORDER', color: 'text-amber-600', badgeColor: 'pending' as const };
   const canCancel = caseData.status !== 'cancelled' && caseData.status !== 'order_placed';
@@ -137,7 +138,11 @@ const CaseCard = memo(function CaseCard({
           >
             {isExpanded ? 'Collapse' : 'View'}
           </Button>
-          {canCancel && <Button variant="ghost" size="sm">Cancel</Button>}
+          {canCancel && (
+            <Button variant="ghost" size="sm" onClick={() => onCancel(caseData.id)}>
+              Cancel
+            </Button>
+          )}
         </div>
       </div>
 
@@ -226,12 +231,19 @@ export default function MyCasesPage() {
   const navigate = useNavigate();
   const [expandedCase, setExpandedCase] = useState<string | null>(null);
   const [filter, setFilter] = useState('all');
+  const [searchField, setSearchField] = useState('Application No.');
+  const [searchTerm, setSearchTerm] = useState('');
   const showBanner = searchParams.get('orderPlaced') === 'true';
 
-  // TODO: Wire filters to API params
-  const { data, isLoading } = useCases({ filter });
-
+  const { data, isLoading } = useCases({ filter, ...(searchTerm ? { search: searchTerm, searchField } : {}) });
   const cases = data?.results ?? [];
+
+  // Cancel case handler
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const handleCancelCase = useCallback((caseId: string) => {
+    setCancellingId(caseId);
+  }, []);
 
   const toggleExpand = useCallback((caseId: string) => {
     setExpandedCase((prev) => (prev === caseId ? null : caseId));
@@ -240,6 +252,10 @@ export default function MyCasesPage() {
   const handleNavigate = useCallback((path: string) => {
     navigate(path);
   }, [navigate]);
+
+  const handleSearch = useCallback(() => {
+    // Trigger re-fetch — useCases already reads searchTerm from state
+  }, []);
 
   return (
     <div>
@@ -278,10 +294,18 @@ export default function MyCasesPage() {
           <div className="flex gap-2 mb-4">
             <SelectField
               options={['Application No.', 'Publication No.', 'Client Reference']}
+              value={searchField}
+              onChange={(e) => setSearchField(e.target.value)}
               className="!w-[200px] !mb-0"
             />
-            <InputField placeholder="Type here" className="!w-[300px] !mb-0" />
-            <Button variant="primary" size="md">Search Past Cases</Button>
+            <InputField
+              placeholder="Type here"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="!w-[300px] !mb-0"
+            />
+            <Button variant="primary" size="md" onClick={handleSearch}>Search Past Cases</Button>
           </div>
 
           {/* Test buttons for word count flow */}
@@ -290,9 +314,11 @@ export default function MyCasesPage() {
           {/* Results count */}
           <div className="flex justify-between items-center mb-3 text-sm">
             <span>
-              Displaying <strong>1 - 20</strong> of <strong>{data?.count ?? '—'}</strong> in total
+              Displaying <strong>1 - {cases.length}</strong> of <strong>{data?.count ?? '—'}</strong> in total
             </span>
-            <span className="text-xs text-gray-400">All statuses selected</span>
+            <span className="text-xs text-gray-400">
+              {filter === 'all' ? 'All statuses selected' : filter === 'quotes' ? 'Quotes only' : 'Orders only'}
+            </span>
           </div>
 
           {/* Loading state */}
@@ -308,6 +334,7 @@ export default function MyCasesPage() {
               isExpanded={expandedCase === c.id}
               onToggle={() => toggleExpand(c.id)}
               onNavigate={handleNavigate}
+              onCancel={handleCancelCase}
             />
           ))}
 
@@ -321,6 +348,45 @@ export default function MyCasesPage() {
 
         {/* Start New Case */}
         <StartNewCaseWidget />
+      </div>
+
+      {/* Cancel confirmation dialog */}
+      {cancellingId && (
+        <CancelDialog
+          caseId={cancellingId}
+          onClose={() => setCancellingId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Cancel Confirmation Dialog ──
+function CancelDialog({ caseId, onClose }: { caseId: string; onClose: () => void }) {
+  const cancelCase = useCancelCase(caseId);
+
+  const handleConfirm = async () => {
+    try {
+      await cancelCase.mutateAsync();
+      onClose();
+    } catch {
+      // Error handled by TanStack Query
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-xl w-[400px] p-6 border border-gray-300" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-base font-bold text-navy mb-2">Cancel Case</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Are you sure you want to cancel this case? This action cannot be undone.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>Go back</Button>
+          <Button variant="danger" onClick={handleConfirm} disabled={cancelCase.isPending}>
+            {cancelCase.isPending ? 'Cancelling...' : 'Yes, cancel case'}
+          </Button>
+        </div>
       </div>
     </div>
   );

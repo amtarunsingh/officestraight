@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { LAST_CASE_ID_KEY } from '@/shared/lib/sessionKeys';
 import { cn } from '@/shared/lib/utils';
 
 interface Phase {
@@ -30,35 +31,68 @@ function getActivePhase(pathname: string): string {
   return 'cases';
 }
 
+/** Match `/case/:id/...` or `/case/:id` so phase tabs stay usable across URL shapes. */
+function extractCaseId(pathname: string): string | null {
+  const match = pathname.match(/^\/case\/([^/]+)(?:\/|$)/);
+  return match?.[1] ?? null;
+}
+
+function readStoredCaseId(): string | null {
+  try {
+    return sessionStorage.getItem(LAST_CASE_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
 export function PhaseTabBar({ pathname }: { pathname: string }) {
   const navigate = useNavigate();
   const activePhase = getActivePhase(pathname);
+  const caseId = extractCaseId(pathname) ?? readStoredCaseId();
 
   const handleClick = (phase: Phase) => {
     if (phase.id === 'cases') {
       navigate('/');
+    } else if (caseId) {
+      // Navigate to the first step of the target phase
+      switch (phase.id) {
+        case 'quote':
+          navigate(`/case/${caseId}/service-selection`);
+          break;
+        case 'order':
+          navigate(`/case/${caseId}/instructions`);
+          break;
+        case 'confirm':
+          navigate(`/case/${caseId}/confirmation`);
+          break;
+      }
     }
-    // Quote/Order/Confirm phases only navigate when within a case context
-    // The actual navigation happens via wizard buttons, not the tab bar
   };
 
   return (
     <div className="bg-white border-b border-gray-300 px-6 overflow-x-auto">
       <div className="flex gap-0">
-        {PHASES.map((ph) => (
-          <button
-            key={ph.id}
-            onClick={() => handleClick(ph)}
-            className={cn(
-              'px-5 py-3 text-sm font-normal whitespace-nowrap border-b-[2.5px] transition-colors',
-              activePhase === ph.id
-                ? 'font-bold text-navy bg-indigo-50/50 border-navy'
-                : 'text-gray-400 bg-transparent border-transparent hover:text-gray-600',
-            )}
-          >
-            {ph.label}
-          </button>
-        ))}
+        {PHASES.map((ph) => {
+          // Disable phase tabs when not in a case context (except "My Cases")
+          const isDisabled = ph.id !== 'cases' && !caseId;
+
+          return (
+            <button
+              key={ph.id}
+              onClick={() => handleClick(ph)}
+              disabled={isDisabled}
+              className={cn(
+                'px-5 py-3 text-sm font-normal whitespace-nowrap border-b-[2.5px] transition-colors',
+                activePhase === ph.id
+                  ? 'font-bold text-navy bg-indigo-50/50 border-navy'
+                  : 'text-gray-400 bg-transparent border-transparent hover:text-gray-600',
+                isDisabled && 'opacity-40 cursor-not-allowed hover:text-gray-400',
+              )}
+            >
+              {ph.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

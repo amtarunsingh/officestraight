@@ -1,9 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useWizardStore } from '@/features/ordering-wizard/store';
+import { useCasePatent } from '@/features/ordering-wizard/useCasePatent';
 import { PatentSidebar } from '@/shared/components/PatentSidebar';
 import { Card, Steps, Checkbox, RadioGroup, InputField, Divider, FooterActions } from '@/shared/components/ui';
 
 const ORDER_STEPS = ['Instructions', 'Inventors', 'Annuities & Special Requests', 'Billing / Email Info'];
+const ORDER_ROUTES = ['instructions', 'inventors', 'annuities', 'billing'];
 
 const SOURCE_OPTIONS = [
   { label: 'Refer to the B1 or the text intended for grant', value: 'b1_text' },
@@ -44,14 +46,18 @@ export default function AnnuitiesPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const navigate = useNavigate();
   const store = useWizardStore();
+  const { patent } = useCasePatent();
 
-  // TODO: Get selected jurisdiction codes from store
-  const offices = ['EG', 'LY', 'BB'];
+  // Derive offices from selected jurisdictions in store, fall back to defaults
+  const selectedJurisdictions = store.jurisdictions.filter((j) => j.selected);
+  const offices = selectedJurisdictions.length > 0
+    ? selectedJurisdictions.map((j) => j.code)
+    : ['EG', 'LY', 'BB'];
 
   return (
-    <div className="flex gap-5">
+    <div className="flex items-start gap-5">
       <div className="flex-1">
-        <Steps steps={ORDER_STEPS} current={3} />
+        <Steps steps={ORDER_STEPS} current={3} onStepClick={(n) => navigate(`/case/${caseId}/${ORDER_ROUTES[n - 1]}`)} />
 
         <Card>
           <h3 className="text-base font-bold text-navy mb-3">Renewal Fees</h3>
@@ -137,7 +143,7 @@ export default function AnnuitiesPage() {
         />
       </div>
 
-      <PatentSidebar patent={null} />
+      <PatentSidebar patent={patent} />
     </div>
   );
 }
