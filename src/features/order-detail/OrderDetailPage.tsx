@@ -338,9 +338,8 @@ function AgentDocumentsTab() {
 
   return (
     <div>
-      <h3 className="text-lg font-bold text-navy mb-1">Agent Documents</h3>
       <p className="text-sm text-gray-500 mb-4">
-        Documents uploaded by local agents per jurisdiction. Agents access this page via a secure link to upload filing confirmations, receipts, and translations.
+        Documents uploaded by agents per jurisdiction.
       </p>
 
       {/* Jurisdiction tabs */}
@@ -360,12 +359,6 @@ function AgentDocumentsTab() {
               )}
             >
               {j.code} — {j.country}
-              <span className={cn(
-                'inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-[11px] font-bold',
-                isActive ? 'bg-gold text-white' : 'bg-gray-200 text-gray-600',
-              )}>
-                {count}
-              </span>
             </button>
           );
         })}
@@ -386,18 +379,12 @@ function AgentDocumentsTab() {
         </div>
       </div>
 
-      {/* Required files heading */}
-      <p className="text-sm text-navy font-medium mb-3">
-        Required files for PCT/EP2025/052966 in {jurisdiction.code}
-      </p>
-
       {/* Documents table */}
       <table className="w-full border-collapse">
         <thead>
           <tr className="border-b-2 border-navy">
             <th className="p-3 text-left text-navy font-bold text-xs w-[30%]">Name</th>
             <th className="p-3 text-left text-navy font-bold text-xs w-[15%]">Status</th>
-            <th className="p-3 text-left text-navy font-bold text-xs w-[30%]">Upload / File</th>
             <th className="p-3 text-left text-navy font-bold text-xs w-[25%]">Actions</th>
           </tr>
         </thead>
@@ -414,32 +401,12 @@ function AgentDocumentsTab() {
                     {style.label}
                   </span>
                 </td>
-                <td className="p-4 align-middle">
-                  {doc.status === 'uploaded' || doc.status === 'approved' ? (
-                    <div>
-                      <div className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline cursor-pointer">
-                        <span className="text-gray-400">&#128206;</span>
-                        {doc.fileName}
-                      </div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">
-                        by {doc.uploadedBy} &middot; {doc.uploadDate}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Button variant="primary" size="sm">Upload file</Button>
-                      <div className="w-[80px] h-[70px] border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
-                        <span className="text-xs text-gray-400 text-center leading-tight">Drop file<br />here</span>
-                      </div>
-                    </div>
-                  )}
-                </td>
+
                 <td className="p-4 align-middle">
                   {(doc.status === 'uploaded' || doc.status === 'approved') ? (
                     <div className="flex gap-3 text-sm">
+                      <span className="text-navy hover:underline cursor-pointer font-medium">View</span>
                       <span className="text-navy hover:underline cursor-pointer font-medium">Download</span>
-                      <span className="text-green-600 hover:underline cursor-pointer font-medium">Approve</span>
-                      <span className="text-red-500 hover:underline cursor-pointer font-medium">Reject</span>
                     </div>
                   ) : (
                     <span className="text-xs text-gray-400 italic">Awaiting upload</span>
@@ -496,9 +463,9 @@ export default function OrderDetailPage() {
     <div>
       {/* Order header */}
       <div className="mb-4">
-        <h2 className="text-xl font-bold text-navy mb-1">Order / Summary</h2>
+        <h2 className="text-xl font-bold text-navy mb-1">Order Details</h2>
         <div className="text-sm text-gold italic">
-          Order PCT00016422 placed on 2025-10-22 <span className="text-gray-500">You Can</span>
+          Order PCT00016422 placed on 2025-10-22 
         </div>
       </div>
 
