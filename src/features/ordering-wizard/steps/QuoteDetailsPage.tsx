@@ -99,8 +99,12 @@ export default function QuoteDetailsPage() {
   }, [showPopup, countdown, navigate]);
 
   const handleSaveAndContinue = useCallback(() => {
+    if (wordCountReady) {
+      navigate(`/case/${caseId}/instructions`);
+      return;
+    }
     setShowPopup(true);
-  }, []);
+  }, [wordCountReady, caseId, navigate]);
 
   return (
     <div className="flex items-start gap-5">
