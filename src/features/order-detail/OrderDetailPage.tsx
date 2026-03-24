@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Badge, Card } from '@/shared/components/ui';
 import { cn } from '@/shared/lib/utils';
 
-const TABS = ['Summary', 'Quote', 'Client', 'Documents', 'Entry basis', 'Progress follow-up'] as const;
+const TABS = ['Summary', 'Quote', 'Client', 'Documents', 'Entry basis', 'Progress follow-up', 'Agent Documents'] as const;
 
 // ── Shared detail row ──
 function DetailRow({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -266,8 +266,198 @@ function ProgressTab() {
   );
 }
 
+// ── Tab: Agent Documents ──
+type DocStatus = 'uploaded' | 'pending' | 'approved' | 'rejected';
+
+interface AgentDocument {
+  name: string;
+  status: DocStatus;
+  fileName?: string;
+  uploadedBy?: string;
+  uploadDate?: string;
+}
+
+interface JurisdictionDocs {
+  code: string;
+  country: string;
+  agent: string;
+  documents: AgentDocument[];
+}
+
+const MOCK_JURISDICTION_DOCS: JurisdictionDocs[] = [
+  {
+    code: 'BR',
+    country: 'Brazil',
+    agent: 'DANNEMANN SIEMSEN',
+    documents: [
+      { name: 'Filing Request', status: 'uploaded', fileName: 'BR_filing_request.pdf', uploadedBy: 'Agent', uploadDate: '2025-09-28' },
+      { name: 'Filing Report', status: 'uploaded', fileName: 'BR_filing_report.pdf', uploadedBy: 'Agent', uploadDate: '2025-10-02' },
+    ],
+  },
+  {
+    code: 'CA',
+    country: 'Canada',
+    agent: 'LAVERY LAWYERS',
+    documents: [
+      { name: 'Filing Request', status: 'uploaded', fileName: 'CA_filing_request.pdf', uploadedBy: 'Agent', uploadDate: '2025-10-01' },
+      { name: 'Filing Report', status: 'uploaded', fileName: 'CA_filing_report.pdf', uploadedBy: 'Agent', uploadDate: '2025-10-06' },
+      { name: 'Claims', status: 'pending' },
+      { name: 'Description', status: 'pending' },
+      { name: 'Filing Receipt', status: 'pending' },
+      { name: 'Power of Attorney Form (if applicable)', status: 'pending' },
+      { name: 'Assignment', status: 'pending' },
+    ],
+  },
+  {
+    code: 'EG',
+    country: 'Egypt',
+    agent: 'SABA INTELLECTUAL PROPERTY',
+    documents: [
+      { name: 'Filing Request', status: 'uploaded', fileName: 'EG_filing_request.pdf', uploadedBy: 'Agent', uploadDate: '2025-10-03' },
+      { name: 'Filing Report', status: 'pending' },
+      { name: 'Claims', status: 'pending' },
+      { name: 'Description', status: 'pending' },
+      { name: 'Filing Receipt', status: 'pending' },
+    ],
+  },
+];
+
+const DOC_STATUS_STYLES: Record<DocStatus, { bg: string; text: string; label: string }> = {
+  uploaded: { bg: 'bg-green-50', text: 'text-green-700', label: 'Uploaded' },
+  approved: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Approved' },
+  pending: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Pending' },
+  rejected: { bg: 'bg-red-50', text: 'text-red-700', label: 'Rejected' },
+};
+
+function AgentDocumentsTab() {
+  const [activeJurisdiction, setActiveJurisdiction] = useState(1); // default to CA
+
+  const jurisdiction = MOCK_JURISDICTION_DOCS[activeJurisdiction]!;
+  const uploadedCount = jurisdiction.documents.filter((d) => d.status === 'uploaded' || d.status === 'approved').length;
+  const pendingCount = jurisdiction.documents.filter((d) => d.status === 'pending').length;
+
+  return (
+    <div>
+      <h3 className="text-lg font-bold text-navy mb-1">Agent Documents</h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Documents uploaded by local agents per jurisdiction. Agents access this page via a secure link to upload filing confirmations, receipts, and translations.
+      </p>
+
+      {/* Jurisdiction tabs */}
+      <div className="flex gap-1 mb-4 border-b border-gray-200">
+        {MOCK_JURISDICTION_DOCS.map((j, i) => {
+          const count = j.documents.length;
+          const isActive = activeJurisdiction === i;
+          return (
+            <button
+              key={j.code}
+              onClick={() => setActiveJurisdiction(i)}
+              className={cn(
+                'px-3 py-2 text-sm -mb-px transition-colors rounded-t-md flex items-center gap-1.5',
+                isActive
+                  ? 'font-bold text-navy border border-gray-300 border-b-white bg-white'
+                  : 'text-gray-500 border border-transparent hover:text-gray-700',
+              )}
+            >
+              {j.code} — {j.country}
+              <span className={cn(
+                'inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded-full text-[11px] font-bold',
+                isActive ? 'bg-gold text-white' : 'bg-gray-200 text-gray-600',
+              )}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Agent + jurisdiction info bar */}
+      <div className="flex justify-between items-center p-3 bg-amber-50/60 border border-amber-200 rounded-lg mb-4">
+        <div className="text-sm">
+          <span className="font-semibold text-navy">Agent:</span>{' '}
+          <span className="text-navy">{jurisdiction.agent}</span>
+          <span className="text-gray-400 mx-2">&middot;</span>
+          <span className="font-semibold text-navy">Jurisdiction:</span>{' '}
+          <span className="text-navy">{jurisdiction.country} ({jurisdiction.code})</span>
+        </div>
+        <div className="flex gap-3 text-xs">
+          <span className="text-green-600 font-semibold">{uploadedCount} uploaded</span>
+          <span className="text-amber-600 font-semibold">{pendingCount} pending</span>
+        </div>
+      </div>
+
+      {/* Required files heading */}
+      <p className="text-sm text-navy font-medium mb-3">
+        Required files for PCT/EP2025/052966 in {jurisdiction.code}
+      </p>
+
+      {/* Documents table */}
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b-2 border-navy">
+            <th className="p-3 text-left text-navy font-bold text-xs w-[30%]">Name</th>
+            <th className="p-3 text-left text-navy font-bold text-xs w-[15%]">Status</th>
+            <th className="p-3 text-left text-navy font-bold text-xs w-[30%]">Upload / File</th>
+            <th className="p-3 text-left text-navy font-bold text-xs w-[25%]">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jurisdiction.documents.map((doc) => {
+            const style = DOC_STATUS_STYLES[doc.status];
+            return (
+              <tr key={doc.name} className="border-b border-gray-200">
+                <td className="p-4 align-middle">
+                  <span className="text-sm font-medium text-navy">{doc.name}</span>
+                </td>
+                <td className="p-4 align-middle">
+                  <span className={cn('inline-block px-2.5 py-1 rounded-full text-xs font-semibold', style.bg, style.text)}>
+                    {style.label}
+                  </span>
+                </td>
+                <td className="p-4 align-middle">
+                  {doc.status === 'uploaded' || doc.status === 'approved' ? (
+                    <div>
+                      <div className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline cursor-pointer">
+                        <span className="text-gray-400">&#128206;</span>
+                        {doc.fileName}
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-0.5">
+                        by {doc.uploadedBy} &middot; {doc.uploadDate}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <Button variant="primary" size="sm">Upload file</Button>
+                      <div className="w-[80px] h-[70px] border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center">
+                        <span className="text-xs text-gray-400 text-center leading-tight">Drop file<br />here</span>
+                      </div>
+                    </div>
+                  )}
+                </td>
+                <td className="p-4 align-middle">
+                  {(doc.status === 'uploaded' || doc.status === 'approved') ? (
+                    <div className="flex gap-3 text-sm">
+                      <span className="text-navy hover:underline cursor-pointer font-medium">Download</span>
+                      <span className="text-green-600 hover:underline cursor-pointer font-medium">Approve</span>
+                      <span className="text-red-500 hover:underline cursor-pointer font-medium">Reject</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400 italic">Awaiting upload</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <OrderFooter />
+    </div>
+  );
+}
+
 // ── Tab components map (avoid switch statement) ──
-const TAB_COMPONENTS = [SummaryTab, QuoteTab, ClientTab, DocumentsTab, EntryBasisTab, ProgressTab];
+const TAB_COMPONENTS = [SummaryTab, QuoteTab, ClientTab, DocumentsTab, EntryBasisTab, ProgressTab, AgentDocumentsTab];
 
 // ── Main Page ──
 export default function OrderDetailPage() {
